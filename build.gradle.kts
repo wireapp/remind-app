@@ -9,7 +9,7 @@ plugins {
     kotlin("plugin.noarg") version "2.1.20"
     kotlin("plugin.serialization") version "2.1.20"
     id("org.jlleitschuh.gradle.ktlint") version "12.2.0"
-    id("io.gitlab.arturbosch.detekt") version "1.23.7"
+    id("io.gitlab.arturbosch.detekt") version "1.23.8"
     id("io.quarkus")
     id("com.gradleup.shadow") version "8.3.6"
 }
