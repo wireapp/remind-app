@@ -28,7 +28,7 @@ val quarkusPlatformVersion: String by project
 configurations.all {
     resolutionStrategy {
         force("com.google.protobuf:protobuf-java:4.31.0")
-        force("com.google.protobuf:protobuf-kotlin:4.31.0")
+        force("com.google.protobuf:protobuf-kotlin:4.31.1")
     }
 }
 
