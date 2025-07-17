@@ -5,7 +5,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
     kotlin("jvm") version "2.1.20"
-    kotlin("plugin.allopen") version "2.1.20"
+    kotlin("plugin.allopen") version "2.2.0"
     kotlin("plugin.noarg") version "2.1.20"
     kotlin("plugin.serialization") version "2.1.20"
     id("org.jlleitschuh.gradle.ktlint") version "12.2.0"
