@@ -55,7 +55,7 @@ dependencies {
     implementation("com.rubiconproject.oss:jchronic:0.2.8")
     implementation("io.github.yamilmedina:natural-kron:2.0.0")
     implementation("io.arrow-kt:arrow-core:1.2.0-RC")
-    implementation("com.wire:wire-apps-jvm-sdk:0.0.8")
+    implementation("com.wire:wire-apps-jvm-sdk:0.0.13")
 
     // Test dependencies
     testImplementation("io.quarkus:quarkus-junit5")
