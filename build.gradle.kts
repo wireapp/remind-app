@@ -4,10 +4,10 @@ import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
-    kotlin("jvm") version "2.1.20"
-    kotlin("plugin.allopen") version "2.1.20"
+    kotlin("jvm") version "2.2.0"
+    kotlin("plugin.allopen") version "2.2.0"
     kotlin("plugin.noarg") version "2.2.0"
-    kotlin("plugin.serialization") version "2.1.20"
+    kotlin("plugin.serialization") version "2.2.0"
     id("org.jlleitschuh.gradle.ktlint") version "12.2.0"
     id("io.gitlab.arturbosch.detekt") version "1.23.8"
     id("io.quarkus")
