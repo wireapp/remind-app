@@ -4,14 +4,14 @@ import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
-    kotlin("jvm") version "2.2.0"
-    kotlin("plugin.allopen") version "2.2.0"
-    kotlin("plugin.noarg") version "2.2.0"
-    kotlin("plugin.serialization") version "2.2.0"
-    id("org.jlleitschuh.gradle.ktlint") version "12.2.0"
+    kotlin("jvm") version "2.2.20"
+    kotlin("plugin.allopen") version "2.2.20"
+    kotlin("plugin.noarg") version "2.2.20"
+    kotlin("plugin.serialization") version "2.2.20"
+    id("org.jlleitschuh.gradle.ktlint") version "13.1.0"
     id("io.gitlab.arturbosch.detekt") version "1.23.8"
     id("io.quarkus")
-    id("com.gradleup.shadow") version "8.3.6"
+    id("com.gradleup.shadow") version "9.1.0"
 }
 
 repositories {
@@ -27,8 +27,8 @@ val quarkusPlatformVersion: String by project
  */
 configurations.all {
     resolutionStrategy {
-        force("com.google.protobuf:protobuf-java:4.31.0")
-        force("com.google.protobuf:protobuf-kotlin:4.31.1")
+        force("com.google.protobuf:protobuf-java:4.32.0")
+        force("com.google.protobuf:protobuf-kotlin:4.32.0")
     }
 }
 
@@ -51,11 +51,10 @@ dependencies {
 
     // Other project dependencies
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
     implementation("com.rubiconproject.oss:jchronic:0.2.8")
-    implementation("io.github.yamilmedina:natural-kron:2.0.0")
     implementation("io.arrow-kt:arrow-core:2.1.2")
-    implementation("com.wire:wire-apps-jvm-sdk:0.0.8")
+    implementation("com.wire:wire-apps-jvm-sdk:0.0.16")
 
     // Test dependencies
     testImplementation("io.quarkus:quarkus-junit5")
@@ -66,8 +65,8 @@ group = "com.wire.bots"
 version = "1.0.0-SNAPSHOT"
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 ktlint {
@@ -82,7 +81,7 @@ ktlint {
 }
 
 detekt {
-    toolVersion = "1.23.7"
+    toolVersion = "1.23.8"
     config.setFrom(file("$rootDir/config/detekt/detekt.yml"))
     baseline = file("$rootDir/config/detekt/baseline.xml")
     parallel = true
@@ -106,7 +105,7 @@ noArg {
 
 tasks.withType<KotlinJvmCompile>().configureEach {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_17)
+        jvmTarget.set(JvmTarget.JVM_21)
         javaParameters.set(true)
     }
 }
