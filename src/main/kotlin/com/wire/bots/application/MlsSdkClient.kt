@@ -40,10 +40,8 @@ private val logger = LoggerFactory.getLogger("RemindAppMlsSdk")
 @Startup
 class MlsSdkClient(
     private val eventProcessor: EventProcessor,
-    @ConfigProperty(name = "wire-sdk-api.bot-key")
-    private val apiToken: String,
-    @ConfigProperty(name = "wire-sdk-api.url")
-    private val apiHost: String
+    @param:ConfigProperty(name = "wire.sdk.api.bot.key") private val apiToken: String,
+    @param:ConfigProperty(name = "wire.sdk.api.url") private val apiHost: String
 ) {
     private lateinit var manager: WireApplicationManager
 
