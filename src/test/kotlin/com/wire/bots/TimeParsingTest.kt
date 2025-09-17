@@ -3,7 +3,7 @@ package com.wire.bots
 import com.mdimension.jchronic.Chronic
 import com.mdimension.jchronic.Options
 import com.mdimension.jchronic.tags.Pointer
-import io.github.yamilmedina.kron.NaturalKronParser
+import com.wire.bots.infrastructure.utils.CronInterpreter
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.Clock
@@ -70,7 +70,7 @@ class TimeParsingTest {
 
     @Test
     fun givenARecurringExpression_thenTheResultIsAValidCronExpression() {
-        val parsed = NaturalKronParser().parse("every monday at 10:00")
+        val parsed = CronInterpreter.textToCron("every monday at 10:00")
         assertEquals("0 0 10 ? * MON", parsed)
     }
 
