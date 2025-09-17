@@ -56,7 +56,7 @@ class MlsSdkClient(
                 applicationId = UUID.randomUUID(),
                 apiToken = apiToken,
                 apiHost = apiHost,
-                cryptographyStoragePassword = "myDummyPassword",
+                cryptographyStoragePassword = "myDummyPasswordOfRandom32BytesCH",
                 wireEventsHandler = object : WireEventsHandlerSuspending() {
                     override suspend fun onMessage(wireMessage: WireMessage.Text) {
                         logger.info("Received Text Message : $wireMessage")
