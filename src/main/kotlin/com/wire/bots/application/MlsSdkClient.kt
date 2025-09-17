@@ -63,7 +63,7 @@ class MlsSdkClient(
                         processEvent(
                             EventDTO(
                                 type = EventTypeDTO.NEW_TEXT,
-                                userId = wireMessage.sender.id.toString().orEmpty(),
+                                userId = wireMessage.sender.id.toString(),
                                 conversationId = wireMessage.conversationId,
                                 text = wireMessage.text.let { TextContent(it) }
                             )
