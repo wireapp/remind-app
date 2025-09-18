@@ -15,4 +15,11 @@ interface OutgoingMessageRepository {
         messageContent: String,
         buttonList: List<WireMessage.Button>
     ): Either<Throwable, Unit>
+
+    fun sendButtonActionConfirmation(
+        conversationId: QualifiedId,
+        sender: QualifiedId,
+        referencedMessageId: String,
+        buttonId: String
+    ): Either<Throwable, Unit>
 }
