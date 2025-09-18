@@ -41,7 +41,9 @@ sealed class Command(
      */
     data class DeleteReminder(
         override val conversationId: QualifiedId,
-        val reminderId: String
+        val reminderId: String,
+        val referencedMessageId: String? = null,
+        val senderId: QualifiedId? = null
     ) : Command(conversationId)
 }
 

@@ -7,9 +7,11 @@ import com.wire.bots.domain.event.Command
 import com.wire.bots.domain.message.OutgoingMessageRepository
 import com.wire.bots.domain.reminder.Reminder
 import com.wire.bots.domain.reminder.ReminderNextSchedule
+import com.wire.bots.domain.reminder.getNextSchedules
 import com.wire.bots.domain.usecase.DeleteReminderUseCase
 import com.wire.bots.domain.usecase.ListRemindersInConversation
 import com.wire.bots.domain.usecase.SaveReminderSchedule
+import com.wire.bots.domain.usecase.SaveReminderSchedule.Companion.MAX_REMINDER_JOBS
 import com.wire.bots.infrastructure.utils.CronInterpreter
 import com.wire.integrations.jvm.model.WireMessage
 
@@ -41,95 +43,126 @@ class CommandHandler(
 
     private fun getReminderListMessages(command: Command.ListReminders): Either<Throwable, Unit> =
         listRemindersInConversation(command.conversationId).flatMap { reminders ->
-            (
-                if (reminders.isEmpty()) {
-                    outgoingMessageRepository.sendMessage(
-                        conversationId = command.conversationId,
-                        messageContent = "There are no reminders yet in this conversation."
-                    )
-                } else {
-                    outgoingMessageRepository.sendMessage(
+            if (reminders.isEmpty()) {
+                outgoingMessageRepository.sendMessage(
+                    conversationId = command.conversationId,
+                    messageContent = "There are no reminders yet in this conversation."
+                )
+            } else {
+                outgoingMessageRepository
+                    .sendMessage(
                         conversationId = command.conversationId,
                         messageContent = "The reminders in this conversation:\n"
-                    )
-                    reminders.forEach {
-                        val message = "'${it.task}' at: ${
-                            when (it) {
-                                is Reminder.SingleReminder -> it.scheduledAt
-                                is Reminder.RecurringReminder -> CronInterpreter.cronToText(
-                                    it.scheduledCron
+                    ).flatMap {
+                        reminders.fold(
+                            Either.Right(Unit) as Either<Throwable, Unit>
+                        ) { acc, reminder ->
+                            acc.flatMap {
+                                val message = "'${reminder.task}' at: ${
+                                    when (reminder) {
+                                        is Reminder.SingleReminder -> reminder.scheduledAt
+                                        is Reminder.RecurringReminder -> CronInterpreter.cronToText(
+                                            reminder.scheduledCron
+                                        )
+                                    }
+                                }"
+                                val delButton: List<WireMessage.Button> = listOf(
+                                    WireMessage.Button(
+                                        text = "Delete",
+                                        id = reminder.taskId
+                                    )
+                                )
+                                outgoingMessageRepository.sendCompositeMessage(
+                                    conversationId = command.conversationId,
+                                    messageContent = message,
+                                    buttonList = delButton
                                 )
                             }
-                        }"
-                        val delButton: List<WireMessage.Button> = listOf(
-                            WireMessage.Button(
-                                text = "Delete",
-                                id = it.taskId
-                            )
-                        )
-                        outgoingMessageRepository.sendCompositeMessage(
-                            conversationId = command.conversationId,
-                            messageContent = message,
-                            buttonList = delButton
-                        )
+                        }
                     }
-                }
-            ) as Either<Throwable, Unit>
+            }
         }
 
     private fun handleNewReminder(command: Command.NewReminder): Either<Throwable, Unit> =
-        saveReminderSchedule(command.reminder).flatMap {
-            outgoingMessageRepository.sendMessage(
-                conversationId = command.conversationId,
-                messageContent = getCreatedMessage(it)
+        // First, create the confirmation message. This can fail if the cron is invalid.
+        getCreatedMessage(
+            ReminderNextSchedule(
+                command.reminder,
+                command.reminder.getNextSchedules(MAX_REMINDER_JOBS)
             )
-        }
-
-    // TODO: add function to retrive single reminder by id
-    private fun deleteReminder(command: Command.DeleteReminder): Either<Throwable, Unit> =
-        listRemindersInConversation(command.conversationId).flatMap { reminders ->
-            val reminder = reminders.find { it.taskId == command.reminderId }
-            if (reminder != null) {
-                deleteReminder.invoke(reminder.taskId, reminder.conversationId).flatMap {
-                    outgoingMessageRepository.sendMessage(
-                        conversationId = command.conversationId,
-                        messageContent = "The reminder '${reminder.task}' was deleted."
+        ).flatMap { message ->
+            // Only if the message is created successfully, save the reminder.
+            saveReminderSchedule(command.reminder).flatMap {
+                val delButton: List<WireMessage.Button> = listOf(
+                    WireMessage.Button(
+                        text = "Delete",
+                        id = it.reminder.taskId
                     )
-                }
-            } else {
-                outgoingMessageRepository.sendMessage(
+                )
+                outgoingMessageRepository.sendCompositeMessage(
                     conversationId = command.conversationId,
-                    messageContent = "❌ The reminder with id '${command.reminderId}' was not found."
+                    messageContent = message,
+                    buttonList = delButton
                 )
             }
         }
 
-    private fun getCreatedMessage(reminderNextSchedule: ReminderNextSchedule): String =
-        when (val reminder = reminderNextSchedule.reminder) {
-            is Reminder.SingleReminder -> {
-                "I will remind you to **'${reminder.task}'** at:\n" +
-                    "**${reminderNextSchedule.nextSchedules.first()}**.\n" +
-                    "If you want to delete it, you can use the command:\n" +
-                    """
-                    ```
-                    /remind delete ${reminder.taskId}
-                    ```
-                    """.trimIndent()
-            }
+    // TODO: add function to retrive single reminder by id
+    private fun deleteReminder(command: Command.DeleteReminder): Either<Throwable, Unit> {
+        val isButtonAction = command.referencedMessageId != null && command.senderId != null
 
-            is Reminder.RecurringReminder -> {
-                "I will periodically remind you to **'${reminder.task}'**.\n" +
-                    "If you want to delete it, you can use the command:\n" +
-                    """
-                    ```
-                    /remind delete ${reminder.taskId}
-                    ```
-                    """.trimIndent() +
-                    "\nThe next ${reminderNextSchedule.nextSchedules.size} " +
-                    "schedules for the reminder is:\n" +
-                    reminderNextSchedule.nextSchedules.joinToString("\n") {
-                        "- $it"
+        val confirmationSent = if (isButtonAction) {
+            outgoingMessageRepository.sendButtonActionConfirmation(
+                conversationId = command.conversationId,
+                referencedMessageId = command.referencedMessageId,
+                sender = command.senderId,
+                buttonId = command.reminderId
+            )
+        } else {
+            Either.Right(Unit)
+        }
+
+        return confirmationSent.flatMap {
+            listRemindersInConversation(command.conversationId).flatMap { reminders ->
+                val reminder = reminders.find { it.taskId == command.reminderId }
+                if (reminder != null) {
+                    deleteReminder.invoke(reminder.taskId, reminder.conversationId).flatMap {
+                        val confirmationText = "The reminder '${reminder.task}' was deleted."
+                        outgoingMessageRepository.sendMessage(
+                            conversationId = command.conversationId,
+                            messageContent = confirmationText
+                        )
                     }
+                } else {
+                    val notFoundText =
+                        "❌ The reminder with id '${command.reminderId}' was not found."
+                    outgoingMessageRepository.sendMessage(
+                        conversationId = command.conversationId,
+                        messageContent = notFoundText
+                    )
+                }
+            }
+        }
+    }
+
+    private fun getCreatedMessage(
+        reminderNextSchedule: ReminderNextSchedule
+    ): Either<Throwable, String> =
+        Either.catch {
+            when (val reminder = reminderNextSchedule.reminder) {
+                is Reminder.SingleReminder -> {
+                    "I will remind you to **'${reminder.task}'** at:\n" +
+                        "**${reminderNextSchedule.nextSchedules.first()}**.\n"
+                }
+
+                is Reminder.RecurringReminder -> {
+                    "I will periodically remind you to **'${reminder.task}'**.\n" +
+                        "\nThe next ${reminderNextSchedule.nextSchedules.size} " +
+                        "schedules for the reminder is:\n" +
+                        reminderNextSchedule.nextSchedules.joinToString("\n") {
+                            "- $it"
+                        }
+                }
             }
         }
 
