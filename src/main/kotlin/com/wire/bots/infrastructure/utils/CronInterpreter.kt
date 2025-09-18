@@ -67,7 +67,7 @@ object CronInterpreter {
     private fun isEveryDay(parts: List<String>) =
         parts[CRON_DAY_INDEX] == "*" &&
             parts[CRON_MONTH_INDEX] == "*" &&
-            parts[CRON_WEEKDAY_INDEX] == "*"
+            parts[CRON_WEEKDAY_INDEX] == "?"
 
     private fun isEveryMonth(parts: List<String>) =
         parts[CRON_MONTH_INDEX] == "*" &&
