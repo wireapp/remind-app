@@ -113,3 +113,9 @@ tasks.withType<KotlinJvmCompile>().configureEach {
 tasks.named<ShadowJar>("shadowJar") {
     mergeServiceFiles()
 }
+
+tasks.withType<Test> {
+    systemProperty("java.util.logging.manager", "org.jboss.logmanager.LogManager")
+    systemProperty("user.language", "en")
+    systemProperty("user.country", "US")
+}
