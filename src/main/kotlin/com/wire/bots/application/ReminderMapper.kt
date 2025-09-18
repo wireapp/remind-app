@@ -65,10 +65,11 @@ object ReminderMapper {
                 Options(Pointer.PointerType.FUTURE)
             )
             val parsedDate = parsedSchedule.beginCalendar.toInstant()
-            ValidateReminder.validateScheduledTimeInFuture(
-                parsedDate,
-                conversationId
-            )?.let { return it.left() }
+            ValidateReminder
+                .validateScheduledTimeInFuture(
+                    parsedDate,
+                    conversationId
+                )?.let { return it.left() }
             Command
                 .NewReminder(
                     conversationId = conversationId,
