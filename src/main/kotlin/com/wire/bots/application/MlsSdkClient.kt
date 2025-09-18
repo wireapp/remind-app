@@ -29,7 +29,6 @@ import jakarta.enterprise.context.ApplicationScoped
 import org.eclipse.microprofile.config.inject.ConfigProperty
 import org.slf4j.LoggerFactory
 import java.util.UUID
-import java.util.UUID.randomUUID
 
 private val logger = LoggerFactory.getLogger("RemindAppMlsSdk")
 
@@ -60,7 +59,7 @@ class MlsSdkClient(
                     override suspend fun onMessage(wireMessage: WireMessage.Text) {
                         logger.info("Received Text Message : $wireMessage")
                         processEvent(
-                            EventDTO(
+                            MessageEventDTO(
                                 type = EventTypeDTO.NEW_TEXT,
                                 userId = wireMessage.sender.id.toString(),
                                 conversationId = wireMessage.conversationId,
@@ -89,19 +88,15 @@ class MlsSdkClient(
 
                     override suspend fun onButtonAction(wireMessage: WireMessage.ButtonAction) {
                         logger.info("Received ButtonAction Message: $wireMessage")
-                        val message = WireMessage.Text.create(
-                            conversationId = wireMessage.conversationId,
-                            text = "Button with id ${wireMessage.buttonId} clicked"
+                        processEvent(
+                            ButtonActionEventDTO(
+                                type = EventTypeDTO.BUTTON_ACTION,
+                                userId = wireMessage.sender.id.toString(),
+                                conversationId = wireMessage.conversationId,
+                                buttonId = wireMessage.buttonId,
+                                referencedMessageId = wireMessage.referencedMessageId
+                            )
                         )
-                        val confirmation = WireMessage.ButtonActionConfirmation(
-                            id = randomUUID(),
-                            conversationId = wireMessage.conversationId,
-                            buttonId = wireMessage.buttonId,
-                            referencedMessageId = wireMessage.referencedMessageId,
-                            sender = wireMessage.sender
-                        )
-                        manager.sendMessageSuspending(message = message)
-                        manager.sendMessageSuspending(message = confirmation)
                     }
 
                     override suspend fun onButtonActionConfirmation(
