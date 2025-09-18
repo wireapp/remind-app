@@ -11,6 +11,7 @@ import com.wire.bots.domain.usecase.DeleteReminderUseCase
 import com.wire.bots.domain.usecase.ListRemindersInConversation
 import com.wire.bots.domain.usecase.SaveReminderSchedule
 import com.wire.bots.infrastructure.utils.CronInterpreter
+import com.wire.integrations.jvm.model.WireMessage
 
 @DomainComponent
 class CommandHandler(
@@ -34,38 +35,46 @@ class CommandHandler(
                 )
 
             is Command.NewReminder -> handleNewReminder(event)
-            is Command.ListReminders -> getReminderListMessage(event)
+            is Command.ListReminders -> getReminderListMessages(event)
             is Command.DeleteReminder -> deleteReminder(event)
         }
 
-    private fun getReminderListMessage(command: Command.ListReminders): Either<Throwable, Unit> =
+    private fun getReminderListMessages(command: Command.ListReminders): Either<Throwable, Unit> =
         listRemindersInConversation(command.conversationId).flatMap { reminders ->
-            val message =
+            (
                 if (reminders.isEmpty()) {
-                    "There are no reminders yet in this conversation."
+                    outgoingMessageRepository.sendMessage(
+                        conversationId = command.conversationId,
+                        messageContent = "There are no reminders yet in this conversation."
+                    )
                 } else {
-                    "The reminders in this conversation:\n" +
-                        reminders.joinToString("\n") {
-                            "'${it.task}' at: ${
-                                when (it) {
-                                    is Reminder.SingleReminder -> it.scheduledAt
-                                    is Reminder.RecurringReminder -> CronInterpreter.cronToText(
-                                        it.scheduledCron
-                                    )
-                                }
-                            }\n" +
-                                """
-                                ```
-                                /remind delete ${it.taskId}
-                                ```
-                                """.trimIndent()
-                        }
+                    outgoingMessageRepository.sendMessage(
+                        conversationId = command.conversationId,
+                        messageContent = "The reminders in this conversation:\n"
+                    )
+                    reminders.forEach {
+                        val message = "'${it.task}' at: ${
+                            when (it) {
+                                is Reminder.SingleReminder -> it.scheduledAt
+                                is Reminder.RecurringReminder -> CronInterpreter.cronToText(
+                                    it.scheduledCron
+                                )
+                            }
+                        }"
+                        val delButton: List<WireMessage.Button> = listOf(
+                            WireMessage.Button(
+                                text = "Delete",
+                                id = it.taskId
+                            )
+                        )
+                        outgoingMessageRepository.sendCompositeMessage(
+                            conversationId = command.conversationId,
+                            messageContent = message,
+                            buttonList = delButton
+                        )
+                    }
                 }
-
-            outgoingMessageRepository.sendMessage(
-                conversationId = command.conversationId,
-                messageContent = message
-            )
+            ) as Either<Throwable, Unit>
         }
 
     private fun handleNewReminder(command: Command.NewReminder): Either<Throwable, Unit> =
