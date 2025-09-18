@@ -59,10 +59,13 @@ object CronInterpreter {
     }
 
     private fun isEveryHour(parts: List<String>) =
-        parts[CRON_HOUR_INDEX] == "*" &&
-            parts[CRON_DAY_INDEX] == "*" &&
+        parts[CRON_MINUTE_INDEX] == "0" &&
+            parts[CRON_HOUR_INDEX] == "*" &&
             parts[CRON_MONTH_INDEX] == "*" &&
-            parts[CRON_WEEKDAY_INDEX] == "*"
+            (
+                (parts[CRON_DAY_INDEX] == "*" && parts[CRON_WEEKDAY_INDEX] == "?") ||
+                    (parts[CRON_DAY_INDEX] == "?" && parts[CRON_WEEKDAY_INDEX] == "*")
+            )
 
     private fun isEveryDayAtHour(parts: List<String>) =
         parts[CRON_SECOND_INDEX] == "0" &&

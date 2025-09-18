@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 class CronInterpreterTest {
     @Test
     fun `should return every hour for valid hourly cron`() {
-        val cron = "* * * * * *"
+        val cron = "0 0 * ? * *"
         val result = CronInterpreter.cronToText(cron)
         assertEquals("every hour", result)
     }
