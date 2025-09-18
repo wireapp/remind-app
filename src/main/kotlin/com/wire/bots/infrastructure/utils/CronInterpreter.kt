@@ -34,13 +34,20 @@ object CronInterpreter {
         } ?: ("10" to "00")
 
         val dayMap = mapOf(
-            "mon" to "MON", "monday" to "MON",
-            "tue" to "TUE", "tuesday" to "TUE",
-            "wed" to "WED", "wednesday" to "WED",
-            "thu" to "THU", "thursday" to "THU",
-            "fri" to "FRI", "friday" to "FRI",
-            "sat" to "SAT", "saturday" to "SAT",
-            "sun" to "SUN", "sunday" to "SUN"
+            "mon" to "MON",
+            "monday" to "MON",
+            "tue" to "TUE",
+            "tuesday" to "TUE",
+            "wed" to "WED",
+            "wednesday" to "WED",
+            "thu" to "THU",
+            "thursday" to "THU",
+            "fri" to "FRI",
+            "friday" to "FRI",
+            "sat" to "SAT",
+            "saturday" to "SAT",
+            "sun" to "SUN",
+            "sunday" to "SUN"
         )
 
         val days = Helpers.extractDays(lower, dayMap)
