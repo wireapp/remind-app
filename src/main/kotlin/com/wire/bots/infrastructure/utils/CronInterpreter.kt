@@ -17,9 +17,9 @@ object CronInterpreter {
             isEveryHour(parts) -> "every hour"
             isEveryDayAtHour(parts) -> "every day at ${formatHour(parts)}:00"
             isEveryDay(parts) -> "every day at ${formatHour(parts)}:${formatMinute(parts)}"
-            isEveryMonth(parts) -> "every month on day ${parts[CRON_DAY_INDEX]} at " +
-                "${formatHour(parts)}:${formatMinute(parts)}"
             isEveryWeek(parts) -> "every week on ${parts[CRON_WEEKDAY_INDEX]} at " +
+                "${formatHour(parts)}:${formatMinute(parts)}"
+            isEveryMonth(parts) -> "every month on day ${parts[CRON_DAY_INDEX]} at " +
                 "${formatHour(parts)}:${formatMinute(parts)}"
             else -> "every (custom cron: $cron)"
         }
@@ -65,9 +65,8 @@ object CronInterpreter {
             parts[CRON_WEEKDAY_INDEX] == "*"
 
     private fun isEveryDay(parts: List<String>) =
-        parts[CRON_DAY_INDEX] == "*" &&
-            parts[CRON_MONTH_INDEX] == "*" &&
-            parts[CRON_WEEKDAY_INDEX] == "?"
+        (parts[CRON_DAY_INDEX] == "*" && parts[CRON_WEEKDAY_INDEX] == "?") ||
+            (parts[CRON_DAY_INDEX] == "?" && parts[CRON_WEEKDAY_INDEX] == "*")
 
     private fun isEveryMonth(parts: List<String>) =
         parts[CRON_MONTH_INDEX] == "*" &&
@@ -96,15 +95,23 @@ object CronInterpreter {
             val match = everyPattern.find(lower)
             val daysRaw = match?.groupValues?.get(1) ?: return null
             // Split by comma or space, trim, and filter out empty
-            val tokens = daysRaw.split(",", " ")
+            val tokens = daysRaw
+                .split(",", " ")
                 .map { it.trim().lowercase() }
                 .filter { it.isNotBlank() }
             // Map both short and full names, deduplicate, preserve order
             val seen = mutableSetOf<String>()
-            val cronDays = tokens.mapNotNull { token ->
-                val key = if (token.length > DAY_NAME_LENGTH) token.take(DAY_NAME_LENGTH) else token
-                dayMap[key] ?: dayMap[token]
-            }.filter { seen.add(it) }
+            val cronDays = tokens
+                .mapNotNull { token ->
+                    val key = if (token.length >
+                        DAY_NAME_LENGTH
+                    ) {
+                        token.take(DAY_NAME_LENGTH)
+                    } else {
+                        token
+                    }
+                    dayMap[key] ?: dayMap[token]
+                }.filter { seen.add(it) }
             return if (cronDays.isNotEmpty()) cronDays.joinToString(",") else null
         }
 
@@ -112,9 +119,9 @@ object CronInterpreter {
             lower: String,
             hour: String,
             minute: String
-        ): String {
-            return when {
-                lower.contains("every day") -> "0 $minute $hour * * ?"
+        ): String =
+            when {
+                lower.contains("every day") -> "0 $minute $hour ? * *"
                 lower.contains("every weekday") -> "0 $minute $hour ? * MON-FRI"
                 lower.contains("every monday") -> "0 $minute $hour ? * MON"
                 lower.contains("every tuesday") -> "0 $minute $hour ? * TUE"
@@ -125,6 +132,5 @@ object CronInterpreter {
                 lower.contains("every sunday") -> "0 $minute $hour ? * SUN"
                 else -> throw IllegalArgumentException("Unsupported schedule: $lower")
             }
-        }
     }
 }
