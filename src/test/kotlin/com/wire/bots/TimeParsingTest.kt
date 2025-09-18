@@ -61,7 +61,7 @@ class TimeParsingTest {
         val expected = LocalDateTime.of(2222, 11, 15, 10, 0)
 
         // when
-        val dateSpan = Chronic.parse("15/11/2222 at 10am", JCHRONIC_OPTS)
+        val dateSpan = Chronic.parse("15 November 2222 at 10am", JCHRONIC_OPTS)
 
         // then
         with(dateSpan.beginCalendar) {
