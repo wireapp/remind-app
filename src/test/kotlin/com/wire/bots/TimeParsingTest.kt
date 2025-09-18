@@ -22,9 +22,10 @@ class TimeParsingTest {
 
         // when
         val options = Options(Pointer.PointerType.FUTURE)
-        options.now = Calendar.getInstance(
-            java.util.TimeZone.getTimeZone("UTC")
-        ).apply { time = now }
+        options.now = Calendar
+            .getInstance(
+                java.util.TimeZone.getTimeZone("UTC")
+            ).apply { time = now }
         val dateSpan = Chronic.parse("tomorrow", options)
 
         // then
@@ -71,7 +72,7 @@ class TimeParsingTest {
     @Test
     fun givenARecurringExpression_thenTheResultIsAValidCronExpression() {
         val parsed = CronInterpreter.textToCron("every monday at 10:00")
-        assertEquals("0 0 10 ? * MON", parsed)
+        assertEquals("0 00 10 ? * MON", parsed)
     }
 
     companion object {
