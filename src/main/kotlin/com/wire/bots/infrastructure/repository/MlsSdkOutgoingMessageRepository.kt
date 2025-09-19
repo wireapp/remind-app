@@ -45,6 +45,25 @@ class MlsSdkOutgoingMessageRepository(
             )
         }
 
+    override fun editCompositeMessage(
+        replacingMessageId: UUID,
+        conversationId: QualifiedId,
+        messageContent: String,
+        buttonList: List<WireMessage.Button>
+    ): Either<Throwable, Unit> =
+        either {
+            val manager = conversationRemoteApi.getManager()
+            val message = WireMessage.CompositeEdited.create(
+                replacingMessageId = replacingMessageId,
+                conversationId = conversationId,
+                text = messageContent,
+                buttonList = buttonList
+            )
+            manager.sendMessage(
+                message = message
+            )
+        }
+
     override fun sendButtonActionConfirmation(
         conversationId: QualifiedId,
         sender: QualifiedId,
