@@ -24,6 +24,7 @@ val quarkusPlatformVersion: String by project
 
 /*
 * Forcing protobuf versions to avoid conflicts with Quarkus dependencies.
+* Make it same as in Wire SDK!
  */
 configurations.all {
     resolutionStrategy {
