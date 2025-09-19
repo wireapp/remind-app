@@ -30,8 +30,9 @@ object EventMapper {
                     val senderId = eventDTO.userId?.let {
                         QualifiedId(UUID.fromString(it), "")
                     }
-                    // basic validation if it is a UUID, it means it is a reminder id
-                    if (isUUID(buttonId)) {
+
+                    val parsedUuid = runCatching { UUID.fromString(buttonId) }.getOrNull()
+                    if (parsedUuid != null) {
                         Command
                             .DeleteReminder(
                                 conversationId = eventDTO.conversationId,
@@ -40,8 +41,6 @@ object EventMapper {
                                 senderId = senderId
                             ).right()
                     } else {
-                        // It was not a UUID, so it's not a delete action.
-                        // We can parse it as a normal command in case other button actions are added in the future.
                         parseCommand(
                             conversationId = eventDTO.conversationId,
                             rawCommand = buttonId,
@@ -173,11 +172,6 @@ object EventMapper {
         }
     }
 }
-
-private val UUID_REGEX =
-    "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$".toRegex()
-
-private fun isUUID(text: String): Boolean = UUID_REGEX.matches(text)
 
 internal val COMMAND_EXPRESSION: Regex = "\\s+".toRegex()
 internal val COMMAND_HINT =
