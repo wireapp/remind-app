@@ -14,6 +14,7 @@ import com.wire.bots.domain.usecase.SaveReminderSchedule
 import com.wire.bots.domain.usecase.SaveReminderSchedule.Companion.MAX_REMINDER_JOBS
 import com.wire.bots.infrastructure.utils.CronInterpreter
 import com.wire.integrations.jvm.model.WireMessage
+import java.util.UUID
 
 @DomainComponent
 class CommandHandler(
@@ -66,16 +67,10 @@ class CommandHandler(
                                         )
                                     }
                                 }"
-                                val delButton: List<WireMessage.Button> = listOf(
-                                    WireMessage.Button(
-                                        text = "Delete",
-                                        id = reminder.taskId
-                                    )
-                                )
                                 outgoingMessageRepository.sendCompositeMessage(
                                     conversationId = command.conversationId,
                                     messageContent = message,
-                                    buttonList = delButton
+                                    buttonList = createButton(text = "Delete", id = reminder.taskId)
                                 )
                             }
                         }
@@ -93,16 +88,10 @@ class CommandHandler(
         ).flatMap { message ->
             // Only if the message is created successfully, save the reminder.
             saveReminderSchedule(command.reminder).flatMap {
-                val delButton: List<WireMessage.Button> = listOf(
-                    WireMessage.Button(
-                        text = "Delete",
-                        id = it.reminder.taskId
-                    )
-                )
                 outgoingMessageRepository.sendCompositeMessage(
                     conversationId = command.conversationId,
                     messageContent = message,
-                    buttonList = delButton
+                    buttonList = createButton(text = "Delete", id = command.reminder.taskId)
                 )
             }
         }
@@ -128,10 +117,20 @@ class CommandHandler(
                 if (reminder != null) {
                     deleteReminder.invoke(reminder.taskId, reminder.conversationId).flatMap {
                         val confirmationText = "The reminder '${reminder.task}' was deleted."
-                        outgoingMessageRepository.sendMessage(
-                            conversationId = command.conversationId,
-                            messageContent = confirmationText
-                        )
+                        if (isButtonAction) {
+                            // Edit the original message to indicate deletion
+                            outgoingMessageRepository.editCompositeMessage(
+                                replacingMessageId = UUID.fromString(command.referencedMessageId),
+                                conversationId = command.conversationId,
+                                messageContent = confirmationText,
+                                buttonList = emptyList()
+                            )
+                        } else {
+                            outgoingMessageRepository.sendMessage(
+                                conversationId = command.conversationId,
+                                messageContent = confirmationText
+                            )
+                        }
                     }
                 } else {
                     val notFoundText =
@@ -201,3 +200,14 @@ class CommandHandler(
             """.trimIndent()
     }
 }
+
+private fun createButton(
+    text: String,
+    id: String
+): List<WireMessage.Button> =
+    listOf(
+        WireMessage.Button(
+            text = text,
+            id = id
+        )
+    )
