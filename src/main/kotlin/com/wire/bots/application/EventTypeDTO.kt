@@ -34,5 +34,8 @@ enum class EventTypeDTO {
     USER_JOINED,
 
     @SerialName("conversation.reaction")
-    REACTION
+    REACTION,
+
+    @SerialName("conversation.button.action")
+    BUTTON_ACTION
 }

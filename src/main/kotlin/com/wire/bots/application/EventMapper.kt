@@ -7,20 +7,49 @@ import arrow.core.right
 import com.wire.bots.domain.event.BotError
 import com.wire.bots.domain.event.Command
 import com.wire.integrations.jvm.model.QualifiedId
+import java.util.UUID
 
 object EventMapper {
     /**
-     * Maps the [EventDTO] to a [Command] object so it can be processed by the application.
+     * Maps the [MessageEventDTO] to a [Command] object so it can be processed by the application.
      */
     fun fromEvent(eventDTO: EventDTO): Either<BotError, Command> =
         runCatching {
             when (eventDTO.type) {
                 EventTypeDTO.NEW_TEXT -> {
+                    require(eventDTO is MessageEventDTO) { "Wrong DTO for this event type." }
                     parseCommand(
                         conversationId = eventDTO.conversationId,
                         rawCommand = eventDTO.text?.data.orEmpty()
                     )
                 }
+
+                EventTypeDTO.BUTTON_ACTION -> {
+                    require(eventDTO is ButtonActionEventDTO) { "Wrong DTO for this event type." }
+                    val buttonId = eventDTO.buttonId.orEmpty()
+                    val senderId = eventDTO.userId?.let {
+                        QualifiedId(UUID.fromString(it), "")
+                    }
+
+                    val parsedUuid = runCatching { UUID.fromString(buttonId) }.getOrNull()
+                    if (parsedUuid != null) {
+                        Command
+                            .DeleteReminder(
+                                conversationId = eventDTO.conversationId,
+                                reminderId = buttonId,
+                                referencedMessageId = eventDTO.referencedMessageId,
+                                senderId = senderId
+                            ).right()
+                    } else {
+                        parseCommand(
+                            conversationId = eventDTO.conversationId,
+                            rawCommand = buttonId,
+                            referencedMessageId = eventDTO.referencedMessageId,
+                            senderId = senderId
+                        )
+                    }
+                }
+
                 else -> BotError.Skip.left()
             }
         }.getOrElse {
@@ -36,7 +65,9 @@ object EventMapper {
      */
     private fun parseCommand(
         conversationId: QualifiedId,
-        rawCommand: String
+        rawCommand: String,
+        referencedMessageId: String? = null,
+        senderId: QualifiedId? = null
     ): Either<BotError, Command> =
         either {
             val words = rawCommand.split(COMMAND_EXPRESSION)
@@ -45,7 +76,9 @@ object EventMapper {
                 "/remind" ->
                     parseCommandArgs(
                         conversationId = conversationId,
-                        args = rawCommand.substringAfter("/remind").trimStart()
+                        args = rawCommand.substringAfter("/remind").trimStart(),
+                        referencedMessageId = referencedMessageId,
+                        senderId = senderId
                     )
                 else -> BotError.Skip.left()
             }
@@ -53,13 +86,17 @@ object EventMapper {
 
     private fun parseCommandArgs(
         conversationId: QualifiedId,
-        args: String
+        args: String,
+        referencedMessageId: String? = null,
+        senderId: QualifiedId? = null
     ): Either<BotError, Command> =
         when {
             args.trim() == "help" -> Command.Help(conversationId).right()
             args.trim() == "list" -> Command.ListReminders(conversationId).right()
             args.startsWith("to") -> parseToCommand(conversationId, args)
-            args.startsWith("delete") -> parseDeleteCommand(conversationId, args)
+            args.startsWith(
+                "delete"
+            ) -> parseDeleteCommand(conversationId, args, referencedMessageId, senderId)
             else ->
                 BotError
                     .Unknown(
@@ -73,22 +110,29 @@ object EventMapper {
         args: String
     ): Either<BotError, Command> {
         val regex = Regex("[\"“”]([^\"“”]*)[\"“”]")
-        val matches = regex.findAll(args.substringAfter("to"))
+        val matches = regex
+            .findAll(args.substringAfter("to"))
             .map { it.groupValues[1] }
             .toList()
         return when {
-            matches.size < 2 -> BotError.ReminderError(
-                conversationId = conversationId,
-                errorType = BotError.ErrorType.INVALID_REMINDER_USAGE
-            ).left()
-            matches[0].isBlank() -> BotError.ReminderError(
-                conversationId = conversationId,
-                errorType = BotError.ErrorType.EMPTY_REMINDER_TASK
-            ).left()
-            matches[1].isBlank() -> BotError.ReminderError(
-                conversationId = conversationId,
-                errorType = BotError.ErrorType.INVALID_REMINDER_USAGE
-            ).left()
+            matches.size < 2 ->
+                BotError
+                    .ReminderError(
+                        conversationId = conversationId,
+                        errorType = BotError.ErrorType.INVALID_REMINDER_USAGE
+                    ).left()
+            matches[0].isBlank() ->
+                BotError
+                    .ReminderError(
+                        conversationId = conversationId,
+                        errorType = BotError.ErrorType.EMPTY_REMINDER_TASK
+                    ).left()
+            matches[1].isBlank() ->
+                BotError
+                    .ReminderError(
+                        conversationId = conversationId,
+                        errorType = BotError.ErrorType.INVALID_REMINDER_USAGE
+                    ).left()
             else -> {
                 val task = matches[0]
                 val schedule = matches[1]
@@ -106,19 +150,24 @@ object EventMapper {
 
     private fun parseDeleteCommand(
         conversationId: QualifiedId,
-        args: String
+        args: String,
+        referencedMessageId: String? = null,
+        senderId: QualifiedId? = null
     ): Either<BotError, Command> {
         val reminderId = args.substringAfter("delete").trim()
         return if (reminderId.isBlank()) {
-            BotError.ReminderError(
-                conversationId = conversationId,
-                errorType = BotError.ErrorType.INVALID_REMINDER_ID
-            ).left()
+            BotError
+                .ReminderError(
+                    conversationId = conversationId,
+                    errorType = BotError.ErrorType.INVALID_REMINDER_ID
+                ).left()
         } else {
             Command
                 .DeleteReminder(
                     conversationId = conversationId,
-                    reminderId = reminderId
+                    reminderId = reminderId,
+                    referencedMessageId = referencedMessageId,
+                    senderId = senderId
                 ).right()
         }
     }

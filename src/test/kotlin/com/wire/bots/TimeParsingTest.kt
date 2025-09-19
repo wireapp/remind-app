@@ -3,7 +3,7 @@ package com.wire.bots
 import com.mdimension.jchronic.Chronic
 import com.mdimension.jchronic.Options
 import com.mdimension.jchronic.tags.Pointer
-import io.github.yamilmedina.kron.NaturalKronParser
+import com.wire.bots.infrastructure.utils.CronInterpreter
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.Clock
@@ -22,9 +22,10 @@ class TimeParsingTest {
 
         // when
         val options = Options(Pointer.PointerType.FUTURE)
-        options.now = Calendar.getInstance(
-            java.util.TimeZone.getTimeZone("UTC")
-        ).apply { time = now }
+        options.now = Calendar
+            .getInstance(
+                java.util.TimeZone.getTimeZone("UTC")
+            ).apply { time = now }
         val dateSpan = Chronic.parse("tomorrow", options)
 
         // then
@@ -60,7 +61,7 @@ class TimeParsingTest {
         val expected = LocalDateTime.of(2222, 11, 15, 10, 0)
 
         // when
-        val dateSpan = Chronic.parse("15/11/2222 at 10am", JCHRONIC_OPTS)
+        val dateSpan = Chronic.parse("15 November 2222 at 10am", JCHRONIC_OPTS)
 
         // then
         with(dateSpan.beginCalendar) {
@@ -70,8 +71,8 @@ class TimeParsingTest {
 
     @Test
     fun givenARecurringExpression_thenTheResultIsAValidCronExpression() {
-        val parsed = NaturalKronParser().parse("every monday at 10:00")
-        assertEquals("0 0 10 ? * MON", parsed)
+        val parsed = CronInterpreter.textToCron("every monday at 10:00")
+        assertEquals("0 00 10 ? * MON", parsed)
     }
 
     companion object {

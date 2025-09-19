@@ -1,6 +1,7 @@
 package com.wire.bots.domain.reminder
 
 import com.wire.integrations.jvm.model.QualifiedId
+import org.quartz.CronExpression
 import java.time.Instant
 import java.util.Date
 
@@ -26,6 +27,24 @@ sealed interface Reminder {
         val scheduledCron: String
     ) : Reminder
 }
+
+/**
+ * Returns the next `count` schedules for the given reminder.
+ */
+fun Reminder.getNextSchedules(count: Int): List<Date> =
+    when (this) {
+        is Reminder.SingleReminder -> listOf(Date.from(this.scheduledAt))
+        is Reminder.RecurringReminder -> {
+            val cron = CronExpression(this.scheduledCron)
+            val schedules = mutableListOf<Date>()
+            var next = Date.from(Instant.now())
+            repeat(count) {
+                next = cron.getNextValidTimeAfter(next)
+                schedules.add(next)
+            }
+            schedules
+        }
+    }
 
 class ReminderNextSchedule(
     val reminder: Reminder,

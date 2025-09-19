@@ -22,7 +22,8 @@ class EventProcessor(
     private val logger = LoggerFactory.getLogger(this::class.java)
 
     fun process(command: Command): Either<Throwable, Unit> =
-        commandHandler.onEvent(command)
+        commandHandler
+            .onEvent(command)
             .mapLeft { unhandled ->
                 logger.error("Error processing command: $command", unhandled)
                 outgoingMessageRepository.sendMessage(

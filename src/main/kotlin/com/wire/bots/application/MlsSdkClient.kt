@@ -40,10 +40,8 @@ private val logger = LoggerFactory.getLogger("RemindAppMlsSdk")
 @Startup
 class MlsSdkClient(
     private val eventProcessor: EventProcessor,
-    @ConfigProperty(name = "wire-sdk-api.bot-key")
-    private val apiToken: String,
-    @ConfigProperty(name = "wire-sdk-api.url")
-    private val apiHost: String
+    @param:ConfigProperty(name = "wire.sdk.api.bot.key") private val apiToken: String,
+    @param:ConfigProperty(name = "wire.sdk.api.url") private val apiHost: String
 ) {
     private lateinit var manager: WireApplicationManager
 
@@ -56,16 +54,16 @@ class MlsSdkClient(
                 applicationId = UUID.randomUUID(),
                 apiToken = apiToken,
                 apiHost = apiHost,
-                cryptographyStoragePassword = "myDummyPassword",
+                cryptographyStoragePassword = "myDummyPasswordOfRandom32BytesCH",
                 wireEventsHandler = object : WireEventsHandlerSuspending() {
                     override suspend fun onMessage(wireMessage: WireMessage.Text) {
                         logger.info("Received Text Message : $wireMessage")
                         processEvent(
-                            EventDTO(
+                            MessageEventDTO(
                                 type = EventTypeDTO.NEW_TEXT,
-                                userId = wireMessage.sender.id.toString().orEmpty(),
+                                userId = wireMessage.sender.id.toString(),
                                 conversationId = wireMessage.conversationId,
-                                text = wireMessage.text.let { TextContent(it) }
+                                text = TextContent(wireMessage.text)
                             )
                         )
 
@@ -90,7 +88,15 @@ class MlsSdkClient(
 
                     override suspend fun onButtonAction(wireMessage: WireMessage.ButtonAction) {
                         logger.info("Received ButtonAction Message: $wireMessage")
-                        // Button actions are not handled by reminder bot
+                        processEvent(
+                            ButtonActionEventDTO(
+                                type = EventTypeDTO.BUTTON_ACTION,
+                                userId = wireMessage.sender.id.toString(),
+                                conversationId = wireMessage.conversationId,
+                                buttonId = wireMessage.buttonId,
+                                referencedMessageId = wireMessage.referencedMessageId
+                            )
+                        )
                     }
 
                     override suspend fun onButtonActionConfirmation(

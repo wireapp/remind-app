@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 class CronInterpreterTest {
     @Test
     fun `should return every hour for valid hourly cron`() {
-        val cron = "* * * * * *"
+        val cron = "0 0 * ? * *"
         val result = CronInterpreter.cronToText(cron)
         assertEquals("every hour", result)
     }
@@ -21,7 +21,7 @@ class CronInterpreterTest {
 
     @Test
     fun `should return every day at specific time for valid daily cron`() {
-        val cron = "0 30 14 * * *"
+        val cron = "0 30 14 ? * *"
         val result = CronInterpreter.cronToText(cron)
         assertEquals("every day at 14:30", result)
     }
@@ -128,7 +128,7 @@ class CronInterpreterTest {
     @Test
     fun `should parse every day`() {
         val cron = CronInterpreter.textToCron("every day at 10:00")
-        assertEquals("0 00 10 * * ?", cron)
+        assertEquals("0 00 10 ? * *", cron)
     }
 
     @Test
