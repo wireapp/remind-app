@@ -62,7 +62,7 @@ dependencies {
     testImplementation("io.rest-assured:rest-assured")
 }
 
-group = "com.wire.bots"
+group = "com.wire"
 version = "1.0.0-SNAPSHOT"
 
 java {
