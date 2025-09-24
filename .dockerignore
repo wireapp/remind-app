@@ -1,5 +1,9 @@
-*
-!build/*-runner
-!build/*-runner.jar
-!build/lib/*
-!build/quarkus-app/*
+Makefile
+.gradle
+.idea
+.kotlin
+.gitignore
+LICENSE
+*.md
+Dockerfile
+docker-compose.yml

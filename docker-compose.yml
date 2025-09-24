@@ -5,7 +5,7 @@ services:
     image: wirebots/reminders:latest
     build:
       context: ./
-      dockerfile: src/main/docker/Dockerfile.${QUARKUS_MODE:-jvm}
+      dockerfile: Dockerfile
     environment:
       QUARKUS_DATASOURCE_URL: jdbc:postgresql://db/quarkus
     depends_on:
