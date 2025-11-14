@@ -1,0 +1,9 @@
+apiVersion: v2
+name: remindapp
+description: Wire Remind-App - A Helm chart for deploying the Wire Remind app
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: https://github.com/wireapp/remind-app
+maintainers:
+  - name: Wire Integrations Team

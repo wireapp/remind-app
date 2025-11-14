@@ -1,7 +1,7 @@
 package com.wire.bots.domain.event
 
 import com.wire.bots.domain.reminder.Reminder
-import com.wire.integrations.jvm.model.QualifiedId
+import com.wire.sdk.model.QualifiedId
 import java.util.UUID
 
 sealed class Command(

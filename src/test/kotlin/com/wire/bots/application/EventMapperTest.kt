@@ -5,7 +5,7 @@ import com.wire.bots.domain.event.Command
 import com.wire.bots.domain.reminder.Reminder
 import com.wire.bots.shouldFail
 import com.wire.bots.shouldSucceed
-import com.wire.integrations.jvm.model.QualifiedId
+import com.wire.sdk.model.QualifiedId
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Test
