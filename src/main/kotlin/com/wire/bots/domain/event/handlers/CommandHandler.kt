@@ -14,6 +14,7 @@ import com.wire.bots.domain.usecase.SaveReminderSchedule
 import com.wire.bots.domain.usecase.SaveReminderSchedule.Companion.MAX_REMINDER_JOBS
 import com.wire.bots.infrastructure.utils.CronInterpreter
 import com.wire.integrations.jvm.model.WireMessage
+import org.slf4j.LoggerFactory
 import java.util.UUID
 
 @DomainComponent
@@ -23,8 +24,15 @@ class CommandHandler(
     private val listRemindersInConversation: ListRemindersInConversation,
     private val deleteReminder: DeleteReminderUseCase
 ) : EventHandler<Command> {
-    override fun onEvent(event: Command): Either<Throwable, Unit> =
-        when (event) {
+    private val logger = LoggerFactory.getLogger(this::class.java)
+
+    override fun onEvent(event: Command): Either<Throwable, Unit> {
+        logger.info(
+            "Event will be processed. Event: ${event::class.simpleName}, " +
+                "conversationId: ${event.conversationId}"
+        )
+
+        val result = when (event) {
             is Command.LegacyHelp ->
                 outgoingMessageRepository.sendMessage(
                     conversationId = event.conversationId,
@@ -41,6 +49,14 @@ class CommandHandler(
             is Command.ListReminders -> getReminderListMessages(event)
             is Command.DeleteReminder -> deleteReminder(event)
         }
+
+        logger.info(
+            "Event is processed successfully. Event: ${event::class.simpleName}, " +
+                "conversationId: ${event.conversationId}"
+        )
+
+        return result
+    }
 
     private fun getReminderListMessages(command: Command.ListReminders): Either<Throwable, Unit> =
         listRemindersInConversation(command.conversationId).flatMap { reminders ->
