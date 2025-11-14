@@ -1,6 +1,6 @@
 package com.wire.bots.infrastructure.utils
 
-import com.wire.integrations.jvm.model.QualifiedId
+import com.wire.sdk.model.QualifiedId
 import java.util.UUID
 
 fun QualifiedId.toRawString(): String = "$id@$domain"

@@ -1,6 +1,6 @@
 package com.wire.bots.domain.reminder
 
-import com.wire.integrations.jvm.model.QualifiedId
+import com.wire.sdk.model.QualifiedId
 import org.quartz.CronExpression
 import java.time.Instant
 import java.util.Date

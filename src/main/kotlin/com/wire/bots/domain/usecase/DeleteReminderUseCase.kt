@@ -3,7 +3,7 @@ package com.wire.bots.domain.usecase
 import arrow.core.Either
 import arrow.core.flatMap
 import com.wire.bots.domain.DomainComponent
-import com.wire.integrations.jvm.model.QualifiedId
+import com.wire.sdk.model.QualifiedId
 import com.wire.bots.domain.reminder.ReminderRepository
 import com.wire.bots.domain.reminder.ReminderJobRepository
 

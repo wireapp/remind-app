@@ -1,0 +1,16 @@
+# Staging environment overrides
+env:
+  - name: WIRE_SDK_USER_ID
+    value: "2f147822-a4ee-457f-8138-e904b046757e"
+  - name: WIRE_SDK_EMAIL
+    value: "luca.rospocher+staging.remind.app@wire.com"
+  - name: WIRE_SDK_ENVIRONMENT
+    value: "staging.zinfra.io"
+  - name: DB_USER
+    value: "remind-app-user"
+  - name: DB_URL
+    value: "jdbc:postgresql://apps-staging-aurora-pg.cluster-cfuao0euwimd.eu-central-1.rds.amazonaws.com:5432/remind-app-db"
+  - name: SDK_APP_ID
+    value: "2c99346e-c97f-4108-a9f3-37cf5ad2b7c4"
+  - name: API_HOST_URL
+    value: "https://staging-nginz-https.zinfra.io"

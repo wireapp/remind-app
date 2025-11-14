@@ -13,7 +13,7 @@ import com.wire.bots.domain.usecase.ListRemindersInConversation
 import com.wire.bots.domain.usecase.SaveReminderSchedule
 import com.wire.bots.domain.usecase.SaveReminderSchedule.Companion.MAX_REMINDER_JOBS
 import com.wire.bots.infrastructure.utils.CronInterpreter
-import com.wire.integrations.jvm.model.WireMessage
+import com.wire.sdk.model.WireMessage
 import org.slf4j.LoggerFactory
 import java.util.UUID
 

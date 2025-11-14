@@ -1,0 +1,110 @@
+replicaCount: 1
+
+image:
+  repository: remindapp
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: "remind-app"
+fullnameOverride: "remind-app"
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: "remind-app-account"
+
+podAnnotations: {}
+
+podSecurityContext:
+  fsGroup: 185
+
+securityContext: {}
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+# External secrets configuration
+secrets:
+  secretName: "remindapp-secrets"
+  mountPath: "/etc/secrets"
+
+# Persistent storage configuration
+persistence:
+  enabled: true
+  storageClass: "gp3-automode-nodepool"
+  accessMode: ReadWriteOnce
+  size: 1Gi
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 1
+  targetCPUUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Environment variables for the application
+env:
+  - name: WIRE_SDK_USER_ID
+    value: ""
+  - name: WIRE_SDK_EMAIL
+    value: ""
+  - name: WIRE_SDK_ENVIRONMENT
+    value: ""
+  - name: DB_USER
+    value: ""
+  - name: DB_URL
+    value: ""
+  - name: SDK_APP_ID
+    value: ""
+  - name: API_HOST_URL
+    value: ""
+
+# Health check configuration (latest Kubernetes spec)
+livenessProbe:
+  httpGet:
+    path: /q/health/live
+    port: http
+    scheme: HTTP
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /q/health/ready
+    port: http
+    scheme: HTTP
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  successThreshold: 1
+  failureThreshold: 3
+
+startupProbe:
+  httpGet:
+    path: /q/health/started
+    port: http
+    scheme: HTTP
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 18

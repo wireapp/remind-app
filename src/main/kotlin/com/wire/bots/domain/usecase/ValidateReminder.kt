@@ -1,7 +1,7 @@
 package com.wire.bots.domain.usecase
 
 import com.wire.bots.domain.event.BotError
-import com.wire.integrations.jvm.model.QualifiedId
+import com.wire.sdk.model.QualifiedId
 import java.time.Instant
 
 object ValidateReminder {

@@ -1,6 +1,7 @@
 Makefile
 .gradle
 .idea
+build
 .kotlin
 .gitignore
 LICENSE

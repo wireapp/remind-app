@@ -4,7 +4,7 @@ import com.wire.bots.infrastructure.utils.toRawString
 import com.wire.bots.infrastructure.utils.toQualifiedId
 import jakarta.persistence.AttributeConverter
 import jakarta.persistence.Converter
-import com.wire.integrations.jvm.model.QualifiedId
+import com.wire.sdk.model.QualifiedId
 
 @Converter(autoApply = true)
 class QualifiedIdConverter : AttributeConverter<QualifiedId, String> {

@@ -1,7 +1,7 @@
 package com.wire.bots.domain.reminder
 
 import arrow.core.Either
-import com.wire.integrations.jvm.model.QualifiedId
+import com.wire.sdk.model.QualifiedId
 
 interface ReminderRepository {
     fun persistReminder(reminder: Reminder): Either<Throwable, Unit>

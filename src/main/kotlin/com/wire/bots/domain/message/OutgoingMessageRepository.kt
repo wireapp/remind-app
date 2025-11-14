@@ -1,8 +1,8 @@
 package com.wire.bots.domain.message
 
 import arrow.core.Either
-import com.wire.integrations.jvm.model.QualifiedId
-import com.wire.integrations.jvm.model.WireMessage
+import com.wire.sdk.model.QualifiedId
+import com.wire.sdk.model.WireMessage
 import java.util.UUID
 
 interface OutgoingMessageRepository {

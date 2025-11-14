@@ -1,7 +1,7 @@
 package com.wire.bots.infrastructure.repository
 
 import arrow.core.Either
-import com.wire.integrations.jvm.model.QualifiedId
+import com.wire.sdk.model.QualifiedId
 import com.wire.bots.domain.reminder.Reminder
 import com.wire.bots.domain.reminder.ReminderRepository
 import com.wire.bots.infrastructure.toDomain

@@ -10,7 +10,7 @@ import com.wire.bots.domain.event.BotError
 import com.wire.bots.domain.event.Command
 import com.wire.bots.domain.reminder.Reminder
 import java.util.UUID
-import com.wire.integrations.jvm.model.QualifiedId
+import com.wire.sdk.model.QualifiedId
 import com.wire.bots.domain.usecase.ValidateReminder
 import com.wire.bots.infrastructure.utils.CronInterpreter
 

@@ -2,7 +2,7 @@ package com.wire.bots
 
 import com.wire.bots.infrastructure.utils.toQualifiedId
 import com.wire.bots.infrastructure.utils.toRawString
-import com.wire.integrations.jvm.model.QualifiedId
+import com.wire.sdk.model.QualifiedId
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
