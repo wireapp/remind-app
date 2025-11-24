@@ -33,16 +33,6 @@ class ReminderEventHandler(
         manager.sendMessageSuspending(message = receipt)
     }
 
-    override suspend fun onAssetMessageReceived(wireMessage: WireMessage.Asset) {
-        logger.info("Received Asset Message: $wireMessage")
-        // Assets are not handled by reminder bot
-    }
-
-    override suspend fun onCompositeMessageReceived(wireMessage: WireMessage.Composite) {
-        logger.info("Received Composite Message: $wireMessage")
-        // Composite messages are not handled by reminder bot
-    }
-
     override suspend fun onButtonClicked(wireMessage: WireMessage.ButtonAction) {
         logger.info("Received ButtonAction Message: $wireMessage")
         processEvent(
@@ -54,16 +44,6 @@ class ReminderEventHandler(
                 referencedMessageId = wireMessage.referencedMessageId
             )
         )
-    }
-
-    override suspend fun onButtonClickConfirmed(wireMessage: WireMessage.ButtonActionConfirmation) {
-        logger.info("Received ButtonActionConfirmation Message: $wireMessage")
-        // Button action confirmations are not handled by reminder bot
-    }
-
-    override suspend fun onPingReceived(wireMessage: WireMessage.Knock) {
-        logger.info("Received onKnockSuspending Message : $wireMessage")
-        // Button knocks/pings are not handled by reminder bot
     }
 
     override suspend fun onLocationMessageReceived(wireMessage: WireMessage.Location) {
