@@ -14,9 +14,9 @@ This is an app that can create reminders for conversation, and send a message wh
 - Delete reminders
 
 > [!IMPORTANT]  
-> As of now, the bot only supports a maximum of 5 active reminders per group.
+> As of now, the app only supports a maximum of 5 active reminders per group.
 
-## Getting started
+## Commands
 
 ### The basics of `/remind` command:
 
@@ -39,13 +39,13 @@ This is an app that can create reminders for conversation, and send a message wh
 | one time reminder  | `/remind to` | `"Fill in your invoices by end of day"`        | `"tomorrow at 17:30"`               |
 | one time reminder  | `/remind to` | `"Fill in your invoices by end of day"`        | `"next Tue at 17:30"`               |
 | one time reminder  | `/remind to` | `"Reply to HR email"`                          | `"in 10 minutes"`                   |
-| one time reminder  | `/remind to` | `"Travel back in time to not develop the bot"` | `"11/11/2150"`                      |
+| one time reminder  | `/remind to` | `"Travel back in time to not develop the app"` | `"11/11/2150"`                      |
 | recurrent reminder | `/remind to` | `"Join the daily stand-up"`                    | `"every day at 10:00"`              |
 | recurrent reminder | `/remind to` | `"Empty the unread emails"`                    | `"every Friday at 17:00"`           |
 | recurrent reminder | `/remind to` | `"Empty the unread emails"`                    | `"every Mon, TUE, friday at 17:00"` |
 
 > [!TIP]  
-> You can set reminders for yourself. To do so, you can use the commands in a private conversation, a 1:1 with the bot.
+> You can set reminders for yourself. To do so, you can use the commands in a private conversation, a 1:1 with the app.
 
 ### Other helpful commands:
 
@@ -54,33 +54,24 @@ This is an app that can create reminders for conversation, and send a message wh
 - `/remind delete <reminder-identifier>` (deletes the target reminder, the identifier can be obtained from the list
   command)
 
-## Technical details
+## Development setup
 
-### Bot Architecture
+You first need to set all the env variables required by the app itself and the SDK inside.
+Check the `.env.sample` and create a new `.env` file while setting the properties.
 
-We are using a DDD-like architecture, but without the burden of defining a full DDD model (involving domains "experts"
-and so on). The idea is to have a clear separation of concerns between the different layers of the application.
-So each layer does the following:
+And also the env variables required by `Wire Applications JVM SDK`, check related README 
+[SDK README](https://github.com/wireapp/wire-apps-jvm-sdk/blob/main/README.md)
 
-- **Application**: Exposes the REST API and handles the HTTP requests, it's what the clients see.
-- **Domain**: Contains the business logic, domain core entities, this layer is "clean" in other words, doesn't have any
-  dependency on other layers or frameworks. To access the logic, we provide UseCases, so we can group them (kind of
-  services + aggregates in DDD)
-- **Infrastructure**: Contains the implementation of the domain repositories, and other external dependencies, like
-  databases, queues technologies, framework configurations, etc.
 
-<img src="https://imgpile.com/images/C7Q2Gj.png" width="800"/>
-
-**Note**: To enforce layer dependency, can be split into different gradle modules, but for now, we are keeping it
-simple.
-
-### Bot Framework
-
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
-
-If you want to learn more about Quarkus, please visit its website: https://quarkus.io/ .
 
 ## Running the application in dev mode
+
+This project uses Quarkus, the Supersonic Subatomic Java Framework.
+If you want to learn more about Quarkus, please visit its website: https://quarkus.io/ .
+
+If you don't want to mess with Quarkus, use the provided `Dockerfile` or `docker-compose.yml`
+
+Otherwise you can just start the `db` service in docker to have Postgres running and run the app yourself.
 
 You can run your application in dev mode that enables live coding using:
 ```shell script
@@ -119,7 +110,7 @@ Or, if you don't have GraalVM installed, you can run the native executable build
 ./gradlew build -Dquarkus.package.type=native -Dquarkus.native.container-build=true
 ```
 
-You can then execute your native executable with: `./build/reminders-bots-1.0.0-SNAPSHOT-runner`
+You can then execute your native executable inside the `build` directory
 
 If you want to learn more about building native executables, please consult https://quarkus.io/guides/gradle-tooling.
 

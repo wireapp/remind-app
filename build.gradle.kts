@@ -28,8 +28,8 @@ val quarkusPlatformVersion: String by project
  */
 configurations.all {
     resolutionStrategy {
-        force("com.google.protobuf:protobuf-java:4.32.0")
-        force("com.google.protobuf:protobuf-kotlin:4.32.0")
+        force("com.google.protobuf:protobuf-java:4.33.0")
+        force("com.google.protobuf:protobuf-kotlin:4.33.0")
     }
 }
 
@@ -45,6 +45,8 @@ dependencies {
     implementation("io.quarkus:quarkus-flyway")
     implementation("io.quarkus:quarkus-quartz")
     implementation("io.quarkus:quarkus-jdbc-postgresql")
+    implementation("io.quarkus:quarkus-smallrye-health")
+    implementation("io.quarkus:quarkus-logging-json")
 
     // Kotlin support
     implementation("io.quarkus:quarkus-kotlin")
@@ -55,7 +57,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
     implementation("com.rubiconproject.oss:jchronic:0.2.8")
     implementation("io.arrow-kt:arrow-core:2.1.2")
-    implementation("com.wire:wire-apps-jvm-sdk:0.0.16")
+    implementation("com.wire:wire-apps-jvm-sdk:0.0.18")
 
     // Test dependencies
     testImplementation("io.quarkus:quarkus-junit5")

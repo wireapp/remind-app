@@ -1,6 +1,6 @@
 package com.wire.bots.infrastructure.repository
 
-import com.wire.integrations.jvm.model.QualifiedId
+import com.wire.sdk.model.QualifiedId
 import io.quarkus.hibernate.orm.panache.kotlin.PanacheEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Convert

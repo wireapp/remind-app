@@ -6,7 +6,7 @@ import arrow.core.raise.either
 import arrow.core.right
 import com.wire.bots.domain.event.BotError
 import com.wire.bots.domain.event.Command
-import com.wire.integrations.jvm.model.QualifiedId
+import com.wire.sdk.model.QualifiedId
 import java.util.UUID
 
 object EventMapper {

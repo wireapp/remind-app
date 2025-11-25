@@ -2,7 +2,7 @@ package com.wire.bots.application
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import com.wire.integrations.jvm.model.QualifiedId
+import com.wire.sdk.model.QualifiedId
 
 interface EventDTO {
     val type: EventTypeDTO

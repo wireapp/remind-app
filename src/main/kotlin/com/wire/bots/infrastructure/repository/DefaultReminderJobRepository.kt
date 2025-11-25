@@ -7,7 +7,7 @@ import com.wire.bots.domain.reminder.ReminderJobRepository
 import com.wire.bots.domain.reminder.ReminderNextSchedule
 import com.wire.bots.infrastructure.jobs.ReminderJob
 import com.wire.bots.infrastructure.utils.toRawString
-import com.wire.integrations.jvm.model.QualifiedId
+import com.wire.sdk.model.QualifiedId
 import jakarta.enterprise.context.ApplicationScoped
 import org.quartz.CronScheduleBuilder
 import org.quartz.JobBuilder

@@ -15,22 +15,14 @@
 
 package com.wire.bots.application
 
-import arrow.core.Either
-import com.wire.bots.domain.event.BotError
-import com.wire.bots.domain.event.Command
 import com.wire.bots.domain.event.EventProcessor
-import com.wire.integrations.jvm.WireAppSdk
-import com.wire.integrations.jvm.WireEventsHandlerSuspending
-import com.wire.integrations.jvm.model.WireMessage
-import com.wire.integrations.jvm.service.WireApplicationManager
+import com.wire.sdk.WireAppSdk
+import com.wire.sdk.service.WireApplicationManager
 import io.quarkus.runtime.Startup
 import jakarta.annotation.PostConstruct
 import jakarta.enterprise.context.ApplicationScoped
-import org.eclipse.microprofile.config.inject.ConfigProperty
 import org.slf4j.LoggerFactory
 import java.util.UUID
-
-private val logger = LoggerFactory.getLogger("RemindAppMlsSdk")
 
 /**
  * MlsSdkClient is the entry point for Wire Apps SDK integration.
@@ -39,11 +31,19 @@ private val logger = LoggerFactory.getLogger("RemindAppMlsSdk")
 @ApplicationScoped
 @Startup
 class MlsSdkClient(
-    private val eventProcessor: EventProcessor,
-    @param:ConfigProperty(name = "wire.sdk.api.bot.key") private val apiToken: String,
-    @param:ConfigProperty(name = "wire.sdk.api.url") private val apiHost: String
+    private val eventProcessor: EventProcessor
 ) {
+    private val logger = LoggerFactory.getLogger(this::class.java)
     private lateinit var manager: WireApplicationManager
+
+    private val applicationId: String = System.getenv("SDK_APP_ID")
+        ?: throw IllegalStateException("SDK_APP_ID environment variable is required")
+    private val apiToken: String = System.getenv("SDK_APP_TOKEN")
+        ?: throw IllegalStateException("SDK_APP_TOKEN environment variable is required")
+    private val apiHost: String = System.getenv("API_HOST_URL")
+        ?: throw IllegalStateException("API_HOST_URL environment variable is required")
+    private val cryptographyStoragePassword: String = System.getenv("CRYPTO_PASSWORD")
+        ?: throw IllegalStateException("CRYPTO_PASSWORD environment variable is required")
 
     fun getManager(): WireApplicationManager = manager
 
@@ -51,81 +51,11 @@ class MlsSdkClient(
     fun init() {
         val wireAppSdk =
             WireAppSdk(
-                applicationId = UUID.randomUUID(),
+                applicationId = UUID.fromString(applicationId),
                 apiToken = apiToken,
                 apiHost = apiHost,
-                cryptographyStoragePassword = "myDummyPasswordOfRandom32BytesCH",
-                wireEventsHandler = object : WireEventsHandlerSuspending() {
-                    override suspend fun onMessage(wireMessage: WireMessage.Text) {
-                        logger.info("Received Text Message : $wireMessage")
-                        processEvent(
-                            MessageEventDTO(
-                                type = EventTypeDTO.NEW_TEXT,
-                                userId = wireMessage.sender.id.toString(),
-                                conversationId = wireMessage.conversationId,
-                                text = TextContent(wireMessage.text)
-                            )
-                        )
-
-                        // Sending a Read Receipt for the received message
-                        val receipt = WireMessage.Receipt.create(
-                            conversationId = wireMessage.conversationId,
-                            type = WireMessage.Receipt.Type.READ,
-                            messages = listOf(wireMessage.id.toString())
-                        )
-                        manager.sendMessageSuspending(message = receipt)
-                    }
-
-                    override suspend fun onAsset(wireMessage: WireMessage.Asset) {
-                        logger.info("Received Asset Message: $wireMessage")
-                        // Assets are not handled by reminder bot
-                    }
-
-                    override suspend fun onComposite(wireMessage: WireMessage.Composite) {
-                        logger.info("Received Composite Message: $wireMessage")
-                        // Composite messages are not handled by reminder bot
-                    }
-
-                    override suspend fun onButtonAction(wireMessage: WireMessage.ButtonAction) {
-                        logger.info("Received ButtonAction Message: $wireMessage")
-                        processEvent(
-                            ButtonActionEventDTO(
-                                type = EventTypeDTO.BUTTON_ACTION,
-                                userId = wireMessage.sender.id.toString(),
-                                conversationId = wireMessage.conversationId,
-                                buttonId = wireMessage.buttonId,
-                                referencedMessageId = wireMessage.referencedMessageId
-                            )
-                        )
-                    }
-
-                    override suspend fun onButtonActionConfirmation(
-                        wireMessage: WireMessage.ButtonActionConfirmation
-                    ) {
-                        logger.info("Received ButtonActionConfirmation Message: $wireMessage")
-                        // Button action confirmations are not handled by reminder bot
-                    }
-
-                    override suspend fun onKnock(wireMessage: WireMessage.Knock) {
-                        logger.info("Received onKnockSuspending Message : $wireMessage")
-                        // Button knocks/pings are not handled by reminder bot
-                    }
-
-                    override suspend fun onLocation(wireMessage: WireMessage.Location) {
-                        logger.info("Received onLocationSuspending Message : $wireMessage")
-
-                        val message = WireMessage.Text.create(
-                            conversationId = wireMessage.conversationId,
-                            text = "Received Location\n\n" +
-                                "Latitude: ${wireMessage.latitude}\n\n" +
-                                "Longitude: ${wireMessage.longitude}\n\n" +
-                                "Name: ${wireMessage.name}\n\n" +
-                                "Zoom: ${wireMessage.zoom}"
-                        )
-
-                        manager.sendMessageSuspending(message = message)
-                    }
-                }
+                cryptographyStoragePassword = cryptographyStoragePassword,
+                wireEventsHandler = ReminderEventHandler(eventProcessor)
             )
 
         logger.info("Starting Wire Apps SDK...")
@@ -134,27 +64,5 @@ class MlsSdkClient(
         manager = applicationManager
         logger.info("Wire Apps SDK started successfully.")
         // Use wireAppSdk.stop() to stop the SDK or just stop it with Ctrl+C/Cmd+C
-    }
-
-    /**
-     * Process an event using the reminder bot logic
-     */
-    private fun processEvent(eventDTO: EventDTO) {
-        try {
-            logger.debug("Processing event: $eventDTO")
-            val result: Either<BotError, Command> = EventMapper.fromEvent(eventDTO)
-            result.fold(
-                ifLeft = { error ->
-                    logger.warn("Processing event with error: $error")
-                    eventProcessor.process(error)
-                },
-                ifRight = { command ->
-                    logger.info("Processing event parsed to: $command")
-                    eventProcessor.process(command)
-                }
-            )
-        } catch (e: IllegalArgumentException) {
-            logger.error("Error processing event", e)
-        }
     }
 }
