@@ -33,6 +33,11 @@ class UsageMetrics(
         .description("Number of Delete command received")
         .register(registry)
 
+    private val appAddedToConversationCounter: Counter = Counter
+        .builder("remindapp_added_to_conversation_total")
+        .description("Number of times the app is added to a conversation")
+        .register(registry)
+
     fun onLegacyHelpCommand() {
         legacyHelpCommandCounter.increment()
     }
@@ -51,5 +56,9 @@ class UsageMetrics(
 
     fun onDeleteCommand() {
         deleteCommandCounter.increment()
+    }
+
+    fun onAppAddedToConversation() {
+        appAddedToConversationCounter.increment()
     }
 }

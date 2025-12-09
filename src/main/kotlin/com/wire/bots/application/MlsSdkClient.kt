@@ -16,6 +16,7 @@
 package com.wire.bots.application
 
 import com.wire.bots.domain.event.EventProcessor
+import com.wire.bots.infrastructure.utils.UsageMetrics
 import com.wire.sdk.WireAppSdk
 import com.wire.sdk.service.WireApplicationManager
 import io.quarkus.runtime.Startup
@@ -31,7 +32,8 @@ import java.util.UUID
 @ApplicationScoped
 @Startup
 class MlsSdkClient(
-    private val eventProcessor: EventProcessor
+    private val eventProcessor: EventProcessor,
+    private val usageMetrics: UsageMetrics
 ) {
     private val logger = LoggerFactory.getLogger(this::class.java)
     private lateinit var manager: WireApplicationManager
@@ -55,7 +57,7 @@ class MlsSdkClient(
                 apiToken = apiToken,
                 apiHost = apiHost,
                 cryptographyStoragePassword = cryptographyStoragePassword,
-                wireEventsHandler = ReminderEventHandler(eventProcessor)
+                wireEventsHandler = ReminderEventHandler(eventProcessor, usageMetrics)
             )
 
         logger.info("Starting Wire Apps SDK...")
