@@ -7,7 +7,7 @@ metadata:
 spec:
   endpoints:
     - port: http
-      path: /metrics
+      path: /q/metrics # 'q' is the default context root for Quarkus applications
   selector:
     matchLabels:
       {{- include "remindapp.selectorLabels" . | nindent 6 }}
