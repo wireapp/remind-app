@@ -52,6 +52,10 @@ dependencies {
     implementation("io.quarkus:quarkus-kotlin")
     implementation("io.quarkus:quarkus-hibernate-orm-panache-kotlin")
 
+    // Metrics
+    implementation("io.quarkus:quarkus-micrometer")
+    implementation("io.quarkus:quarkus-micrometer-registry-prometheus")
+
     // Other project dependencies
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
