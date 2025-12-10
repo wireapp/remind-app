@@ -13,6 +13,7 @@ import com.wire.bots.domain.usecase.ListRemindersInConversation
 import com.wire.bots.domain.usecase.SaveReminderSchedule
 import com.wire.bots.domain.usecase.SaveReminderSchedule.Companion.MAX_REMINDER_JOBS
 import com.wire.bots.infrastructure.utils.CronInterpreter
+import com.wire.bots.infrastructure.utils.UsageMetrics
 import com.wire.sdk.model.WireMessage
 import org.slf4j.LoggerFactory
 import java.util.UUID
@@ -22,7 +23,8 @@ class CommandHandler(
     private val outgoingMessageRepository: OutgoingMessageRepository,
     private val saveReminderSchedule: SaveReminderSchedule,
     private val listRemindersInConversation: ListRemindersInConversation,
-    private val deleteReminder: DeleteReminderUseCase
+    private val deleteReminder: DeleteReminderUseCase,
+    private val usageMetrics: UsageMetrics
 ) : EventHandler<Command> {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -33,21 +35,36 @@ class CommandHandler(
         )
 
         val result = when (event) {
-            is Command.LegacyHelp ->
+            is Command.LegacyHelp -> {
+                usageMetrics.onLegacyHelpCommand()
                 outgoingMessageRepository.sendMessage(
                     conversationId = event.conversationId,
                     messageContent = BuildMsg.createLegacyHelpMessage()
                 )
+            }
 
-            is Command.Help ->
+            is Command.Help -> {
+                usageMetrics.onHelpCommand()
                 outgoingMessageRepository.sendMessage(
                     conversationId = event.conversationId,
                     messageContent = BuildMsg.createHelpMessage()
                 )
+            }
 
-            is Command.NewReminder -> handleNewReminder(event)
-            is Command.ListReminders -> getReminderListMessages(event)
-            is Command.DeleteReminder -> deleteReminder(event)
+            is Command.NewReminder -> {
+                usageMetrics.onCreateCommand()
+                handleNewReminder(event)
+            }
+
+            is Command.ListReminders -> {
+                usageMetrics.onListCommand()
+                getReminderListMessages(event)
+            }
+
+            is Command.DeleteReminder -> {
+                usageMetrics.onDeleteCommand()
+                deleteReminder(event)
+            }
         }
 
         logger.info(

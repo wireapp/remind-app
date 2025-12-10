@@ -4,12 +4,16 @@ import arrow.core.Either
 import com.wire.bots.domain.event.BotError
 import com.wire.bots.domain.event.Command
 import com.wire.bots.domain.event.EventProcessor
+import com.wire.bots.infrastructure.utils.UsageMetrics
 import com.wire.sdk.WireEventsHandlerSuspending
+import com.wire.sdk.model.ConversationData
+import com.wire.sdk.model.ConversationMember
 import com.wire.sdk.model.WireMessage
 import org.slf4j.LoggerFactory
 
 class ReminderEventHandler(
-    private val eventProcessor: EventProcessor
+    private val eventProcessor: EventProcessor,
+    private val usageMetrics: UsageMetrics
 ) : WireEventsHandlerSuspending() {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -59,6 +63,13 @@ class ReminderEventHandler(
         )
 
         manager.sendMessageSuspending(message = message)
+    }
+
+    override suspend fun onAppAddedToConversation(
+        conversation: ConversationData,
+        members: List<ConversationMember>
+    ) {
+        usageMetrics.onAppAddedToConversation()
     }
 
     /**

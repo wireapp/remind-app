@@ -52,6 +52,10 @@ dependencies {
     implementation("io.quarkus:quarkus-kotlin")
     implementation("io.quarkus:quarkus-hibernate-orm-panache-kotlin")
 
+    // Metrics
+    implementation("io.quarkus:quarkus-micrometer")
+    implementation("io.quarkus:quarkus-micrometer-registry-prometheus")
+
     // Other project dependencies
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
@@ -62,6 +66,7 @@ dependencies {
     // Test dependencies
     testImplementation("io.quarkus:quarkus-junit5")
     testImplementation("io.rest-assured:rest-assured")
+    testImplementation("io.mockk:mockk:1.13.7")
 }
 
 group = "com.wire"

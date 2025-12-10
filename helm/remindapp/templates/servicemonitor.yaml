@@ -1,0 +1,13 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "remindapp.fullname" . }}
+  labels:
+    {{- include "remindapp.labels" . | nindent 4 }}
+spec:
+  endpoints:
+    - port: http
+      path: /q/metrics # 'q' is the default context root for Quarkus applications
+  selector:
+    matchLabels:
+      {{- include "remindapp.selectorLabels" . | nindent 6 }}
