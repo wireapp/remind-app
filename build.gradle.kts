@@ -1,7 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
     kotlin("jvm") version "2.2.20"
@@ -11,7 +10,7 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint") version "13.1.0"
     id("io.gitlab.arturbosch.detekt") version "1.23.8"
     id("io.quarkus")
-    id("com.gradleup.shadow") version "9.1.0"
+    id("com.gradleup.shadow") version "9.3.0"
 }
 
 repositories {
@@ -113,8 +112,14 @@ tasks.withType<KotlinJvmCompile>().configureEach {
     }
 }
 
-tasks.named<ShadowJar>("shadowJar") {
-    mergeServiceFiles()
+tasks {
+    named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
+        mergeServiceFiles()
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
+    build {
+        dependsOn(shadowJar)
+    }
 }
 
 tasks.withType<Test> {

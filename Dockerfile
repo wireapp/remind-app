@@ -2,6 +2,9 @@ FROM registry.access.redhat.com/ubi9/openjdk-21 AS build
 LABEL description="Wire Remind App"
 LABEL project="wire-apps:reminder"
 
+# Run build as root to avoid permission issues with Gradle cache
+USER root
+
 WORKDIR /setup
 
 # Copy the entire project context for building
