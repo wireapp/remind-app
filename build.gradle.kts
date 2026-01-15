@@ -10,7 +10,6 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint") version "13.1.0"
     id("io.gitlab.arturbosch.detekt") version "1.23.8"
     id("io.quarkus")
-    id("com.gradleup.shadow") version "9.3.0"
 }
 
 repositories {
@@ -109,16 +108,6 @@ tasks.withType<KotlinJvmCompile>().configureEach {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_21)
         javaParameters.set(true)
-    }
-}
-
-tasks {
-    named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
-        mergeServiceFiles()
-        duplicatesStrategy = DuplicatesStrategy.INCLUDE
-    }
-    build {
-        dependsOn(shadowJar)
     }
 }
 
