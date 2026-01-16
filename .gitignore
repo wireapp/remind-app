@@ -41,3 +41,5 @@ nb-configuration.xml
 # Ignore Storage directory content but keep the directory
 storage/*
 !storage/.gitkeep
+
+CLAUDE.md
