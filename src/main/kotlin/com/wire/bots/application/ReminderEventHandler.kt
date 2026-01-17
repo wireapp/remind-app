@@ -4,6 +4,7 @@ import arrow.core.Either
 import com.wire.bots.domain.event.BotError
 import com.wire.bots.domain.event.Command
 import com.wire.bots.domain.event.EventProcessor
+import com.wire.bots.domain.event.handlers.BuildMsg.welcomeText
 import com.wire.bots.infrastructure.utils.UsageMetrics
 import com.wire.sdk.WireEventsHandlerSuspending
 import com.wire.sdk.model.ConversationData
@@ -70,6 +71,13 @@ class ReminderEventHandler(
         members: List<ConversationMember>
     ) {
         usageMetrics.onAppAddedToConversation()
+
+        val welcomeMessage = WireMessage.Text.create(
+            conversationId = conversation.id,
+            text = welcomeText
+        )
+
+        manager.sendMessageSuspending(welcomeMessage)
     }
 
     /**

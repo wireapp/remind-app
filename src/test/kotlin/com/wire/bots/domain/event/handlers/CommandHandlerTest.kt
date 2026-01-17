@@ -27,7 +27,7 @@ import java.util.UUID
 class CommandHandlerTest {
     @Test
     fun `BuildMsg createHelpMessage should include usage examples`() {
-        val msg = BuildMsg.createHelpMessage()
+        val msg = BuildMsg.helpMessage
         assertTrue(msg.contains("/remind to \"do something\""))
         assertTrue(msg.contains("/remind list"))
         assertTrue(msg.contains("/remind delete <reminderId>"))
@@ -110,7 +110,8 @@ class CommandHandlerTest {
         result.fold({ fail("expected success: $it") }) {}
 
         verify { usageMetrics.onHelpCommand() }
-        assertTrue(slot.captured.contains("Hi, I'm the Remind App"))
+        val commands = listOf("/remind to", "/remind list", "/remind delete")
+        assertTrue(commands.all { command -> slot.captured.contains(command) })
     }
 
     @Test
