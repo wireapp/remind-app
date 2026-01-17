@@ -37,25 +37,6 @@ class EventMapperTest {
     }
 
     @Test
-    fun givenTextEvent_whenTextIsHelp_ThenReturnLegacyHelpCommand() {
-        // given
-        val messageEventDTO =
-            MessageEventDTO(
-                type = EventTypeDTO.NEW_TEXT,
-                conversationId = TEST_CONVERSATION_ID,
-                text = TextContent("/help")
-            )
-
-        // when
-        val event = EventMapper.fromEvent(messageEventDTO)
-
-        // then
-        event.shouldSucceed {
-            assertEquals(Command.LegacyHelp(TEST_CONVERSATION_ID), it)
-        }
-    }
-
-    @Test
     fun givenTextEvent_whenTextIsHelp_ThenReturnHelpCommand() {
         // given
         val messageEventDTO =

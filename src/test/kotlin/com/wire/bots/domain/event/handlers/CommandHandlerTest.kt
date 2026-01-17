@@ -26,12 +26,6 @@ import java.util.UUID
 
 class CommandHandlerTest {
     @Test
-    fun `BuildMsg createLegacyHelpMessage should contain help trigger`() {
-        val msg = BuildMsg.createLegacyHelpMessage()
-        assertTrue(msg.contains("/remind help"))
-    }
-
-    @Test
     fun `BuildMsg createHelpMessage should include usage examples`() {
         val msg = BuildMsg.createHelpMessage()
         assertTrue(msg.contains("/remind to \"do something\""))
@@ -117,34 +111,6 @@ class CommandHandlerTest {
 
         verify { usageMetrics.onHelpCommand() }
         assertTrue(slot.captured.contains("Hi, I'm the Remind App"))
-    }
-
-    @Test
-    fun `on LegacyHelp should send legacy help message and call usage metrics`() {
-        val outgoing = mockk<OutgoingMessageRepository>()
-        val usageMetrics = mockk<UsageMetrics>(relaxed = true)
-        val saveReminderSchedule = mockk<SaveReminderSchedule>()
-        val deleteReminder = mockk<DeleteReminderUseCase>()
-        val conversationId = QualifiedId(UUID.randomUUID(), "example.com")
-
-        every { usageMetrics.onLegacyHelpCommand() } just runs
-        val slot = slot<String>()
-        every { outgoing.sendMessage(conversationId, capture(slot)) } returns Either.Right(Unit)
-
-        val handler = CommandHandler(
-            outgoing,
-            saveReminderSchedule,
-            mockk(relaxed = true),
-            deleteReminder,
-            usageMetrics
-        )
-
-        val cmd = Command.LegacyHelp(conversationId = conversationId)
-        val result = handler.onEvent(cmd)
-        result.fold({ fail("expected success: $it") }) {}
-
-        verify { usageMetrics.onLegacyHelpCommand() }
-        assertTrue(slot.captured.contains("/remind help"))
     }
 
     @Test

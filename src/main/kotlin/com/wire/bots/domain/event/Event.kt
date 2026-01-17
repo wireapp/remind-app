@@ -15,13 +15,6 @@ sealed class Command(
     ) : Command(conversationId)
 
     /**
-     * Legacy Help event (without suffix) suggesting to use the new help event.
-     */
-    data class LegacyHelp(
-        override val conversationId: QualifiedId
-    ) : Command(conversationId)
-
-    /**
      * New reminder event, for the target conversation.
      */
     data class NewReminder(

@@ -35,14 +35,6 @@ class CommandHandler(
         )
 
         val result = when (event) {
-            is Command.LegacyHelp -> {
-                usageMetrics.onLegacyHelpCommand()
-                outgoingMessageRepository.sendMessage(
-                    conversationId = event.conversationId,
-                    messageContent = BuildMsg.createLegacyHelpMessage()
-                )
-            }
-
             is Command.Help -> {
                 usageMetrics.onHelpCommand()
                 outgoingMessageRepository.sendMessage(
@@ -200,10 +192,6 @@ class CommandHandler(
 }
 
 object BuildMsg {
-    fun createLegacyHelpMessage(): String =
-        "**Hi, I\\'m the Remind App.**\nPlease use my specific help command\n" +
-            "```\n/remind help\n```\n"
-
     fun createHelpMessage(): String =
         """
             **Hi, I'm the Remind App.**
