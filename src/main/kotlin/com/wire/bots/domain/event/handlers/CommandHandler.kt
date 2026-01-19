@@ -35,19 +35,11 @@ class CommandHandler(
         )
 
         val result = when (event) {
-            is Command.LegacyHelp -> {
-                usageMetrics.onLegacyHelpCommand()
-                outgoingMessageRepository.sendMessage(
-                    conversationId = event.conversationId,
-                    messageContent = BuildMsg.createLegacyHelpMessage()
-                )
-            }
-
             is Command.Help -> {
                 usageMetrics.onHelpCommand()
                 outgoingMessageRepository.sendMessage(
                     conversationId = event.conversationId,
-                    messageContent = BuildMsg.createHelpMessage()
+                    messageContent = BuildMsg.helpMessage
                 )
             }
 
@@ -200,14 +192,8 @@ class CommandHandler(
 }
 
 object BuildMsg {
-    fun createLegacyHelpMessage(): String =
-        "**Hi, I\\'m the Remind App.**\nPlease use my specific help command\n" +
-            "```\n/remind help\n```\n"
-
-    fun createHelpMessage(): String =
+    val helpMessage =
         """
-            **Hi, I'm the Remind App.**
-            **I can help you to create reminders for your conversations, or yourself.**
             1. You can create one time reminders, for example:
             ```
             /remind to "do something" "in 5 minutes"
@@ -265,4 +251,11 @@ object BuildMsg {
         }"
         return message
     }
+
+    val welcomeText =
+        "👋 Hi, I'm the Remind App. Thanks for adding me to the conversation.\n" +
+            "You can use me to create reminders for your conversations, or yourself.\n" +
+            "I'm here to help make everyday work a little easier.\n" +
+            "Choose a command to get started:\n" +
+            helpMessage
 }

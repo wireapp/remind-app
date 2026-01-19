@@ -71,17 +71,15 @@ object EventMapper {
     ): Either<BotError, Command> =
         either {
             val words = rawCommand.split(COMMAND_EXPRESSION)
-            return when (words[0]) {
-                "/help" -> Command.LegacyHelp(conversationId).right()
-                "/remind" ->
-                    parseCommandArgs(
-                        conversationId = conversationId,
-                        args = rawCommand.substringAfter("/remind").trimStart(),
-                        referencedMessageId = referencedMessageId,
-                        senderId = senderId
-                    )
-                else -> BotError.Skip.left()
+            if (words[0] == "/remind") {
+                return parseCommandArgs(
+                    conversationId = conversationId,
+                    args = rawCommand.substringAfter("/remind").trimStart(),
+                    referencedMessageId = referencedMessageId,
+                    senderId = senderId
+                )
             }
+            return BotError.Skip.left()
         }
 
     private fun parseCommandArgs(

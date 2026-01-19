@@ -8,11 +8,6 @@ import io.micrometer.core.instrument.MeterRegistry
 class UsageMetrics(
     registry: MeterRegistry
 ) {
-    private val legacyHelpCommandCounter: Counter = Counter
-        .builder("remindapp_legacy_help_commands_total")
-        .description("Number of Legacy Help command received")
-        .register(registry)
-
     private val helpCommandCounter: Counter = Counter
         .builder("remindapp_help_commands_total")
         .description("Number of Help command received")
@@ -37,10 +32,6 @@ class UsageMetrics(
         .builder("remindapp_added_to_conversation_total")
         .description("Number of times the app is added to a conversation")
         .register(registry)
-
-    fun onLegacyHelpCommand() {
-        legacyHelpCommandCounter.increment()
-    }
 
     fun onHelpCommand() {
         helpCommandCounter.increment()
