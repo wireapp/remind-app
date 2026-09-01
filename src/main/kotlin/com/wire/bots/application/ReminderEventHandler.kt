@@ -7,7 +7,7 @@ import com.wire.bots.domain.event.EventProcessor
 import com.wire.bots.domain.event.handlers.BuildMsg.welcomeText
 import com.wire.bots.infrastructure.utils.UsageMetrics
 import com.wire.sdk.WireEventsHandlerSuspending
-import com.wire.sdk.model.ConversationData
+import com.wire.sdk.model.Conversation
 import com.wire.sdk.model.ConversationMember
 import com.wire.sdk.model.WireMessage
 import org.slf4j.LoggerFactory
@@ -38,36 +38,36 @@ class ReminderEventHandler(
         manager.sendMessageSuspending(message = receipt)
     }
 
-    override suspend fun onButtonClicked(wireMessage: WireMessage.ButtonAction) {
-        logger.info("Received ButtonAction Message: $wireMessage")
+    override suspend fun onButtonClicked(buttonAction: WireMessage.ButtonAction) {
+        logger.info("Received ButtonAction Message: $buttonAction")
         processEvent(
             ButtonActionEventDTO(
                 type = EventTypeDTO.BUTTON_ACTION,
-                userId = wireMessage.sender.id.toString(),
-                conversationId = wireMessage.conversationId,
-                buttonId = wireMessage.buttonId,
-                referencedMessageId = wireMessage.referencedMessageId
+                userId = buttonAction.sender.id.toString(),
+                conversationId = buttonAction.conversationId,
+                buttonId = buttonAction.buttonId,
+                referencedMessageId = buttonAction.referencedMessageId
             )
         )
     }
 
-    override suspend fun onLocationMessageReceived(wireMessage: WireMessage.Location) {
-        logger.info("Received onLocationSuspending Message : $wireMessage")
+    override suspend fun onLocationMessageReceived(locationMessage: WireMessage.Location) {
+        logger.info("Received onLocationSuspending Message : $locationMessage")
 
         val message = WireMessage.Text.create(
-            conversationId = wireMessage.conversationId,
+            conversationId = locationMessage.conversationId,
             text = "Received Location\n\n" +
-                "Latitude: ${wireMessage.latitude}\n\n" +
-                "Longitude: ${wireMessage.longitude}\n\n" +
-                "Name: ${wireMessage.name}\n\n" +
-                "Zoom: ${wireMessage.zoom}"
+                "Latitude: ${locationMessage.latitude}\n\n" +
+                "Longitude: ${locationMessage.longitude}\n\n" +
+                "Name: ${locationMessage.name}\n\n" +
+                "Zoom: ${locationMessage.zoom}"
         )
 
         manager.sendMessageSuspending(message = message)
     }
 
     override suspend fun onAppAddedToConversation(
-        conversation: ConversationData,
+        conversation: Conversation,
         members: List<ConversationMember>
     ) {
         usageMetrics.onAppAddedToConversation()
