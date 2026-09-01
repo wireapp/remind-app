@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: remindapp
+  repository: quay.io/wire/jenkins-app
   pullPolicy: IfNotPresent
   tag: "latest"
 
@@ -60,12 +60,6 @@ affinity: {}
 
 # Environment variables for the application
 env:
-  - name: WIRE_SDK_USER_ID
-    value: ""
-  - name: WIRE_SDK_EMAIL
-    value: ""
-  - name: WIRE_SDK_ENVIRONMENT
-    value: ""
   - name: DB_USER
     value: ""
   - name: DB_URL
