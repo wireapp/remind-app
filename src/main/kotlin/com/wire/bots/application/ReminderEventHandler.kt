@@ -19,7 +19,9 @@ class ReminderEventHandler(
     private val logger = LoggerFactory.getLogger(this::class.java)
 
     override suspend fun onTextMessageReceived(wireMessage: WireMessage.Text) {
-        logger.info("Received Text Message : ${wireMessage.id} in conversation ${wireMessage.conversationId}")
+        logger.info(
+            "Received Text Message : ${wireMessage.id} in conversation ${wireMessage.conversationId}"
+        )
         processEvent(
             MessageEventDTO(
                 type = EventTypeDTO.NEW_TEXT,
@@ -39,7 +41,9 @@ class ReminderEventHandler(
     }
 
     override suspend fun onButtonClicked(buttonAction: WireMessage.ButtonAction) {
-        logger.info("Received ButtonAction Message: ${buttonAction.id} in conversation ${buttonAction.conversationId}")
+        logger.info(
+            "Received ButtonAction Message: ${buttonAction.id} in conversation ${buttonAction.conversationId}"
+        )
         processEvent(
             ButtonActionEventDTO(
                 type = EventTypeDTO.BUTTON_ACTION,
@@ -52,7 +56,10 @@ class ReminderEventHandler(
     }
 
     override suspend fun onLocationMessageReceived(locationMessage: WireMessage.Location) {
-        logger.info("Received onLocationSuspending Message : ${locationMessage.id} in conversation ${locationMessage.conversationId}")
+        logger.info(
+            "Received onLocationSuspending Message : ${locationMessage.id} " +
+                "in conversation ${locationMessage.conversationId}"
+        )
 
         val message = WireMessage.Text.create(
             conversationId = locationMessage.conversationId,
