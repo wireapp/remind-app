@@ -56,7 +56,7 @@ class MlsSdkClient(
                 applicationId = UUID.fromString(applicationId),
                 apiToken = apiToken,
                 apiHost = apiHost,
-                cryptographyStoragePassword = cryptographyStoragePassword,
+                cryptographyStorageKey = cryptographyStoragePassword.toByteArray(),
                 wireEventsHandler = ReminderEventHandler(eventProcessor, usageMetrics)
             )
 

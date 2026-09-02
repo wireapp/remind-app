@@ -46,15 +46,6 @@ MONITORING & DEBUGGING:
 
 CONFIGURATION:
 {{- range .Values.env }}
-{{- if eq .name "WIRE_SDK_USER_ID" }}
-- Wire SDK User Id: {{ .value | default "Not configured" }}
-{{- end }}
-{{- if eq .name "WIRE_SDK_EMAIL" }}
-- Wire SDK User Email: {{ .value | default "Not configured" }}
-{{- end }}
-{{- if eq .name "WIRE_SDK_ENVIRONMENT" }}
-- Wire SDK Environment: {{ .value | default "Not configured" }}
-{{- end }}
 {{- if eq .name "DB_USER" }}
 - Database user: {{ .value | default "Not configured" }}
 {{- end }}

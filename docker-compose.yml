@@ -1,8 +1,8 @@
-version: '3'
-
 services:
   reminders_app:
     platform: linux/amd64 # Allows using core-crypto on macOs
+    # Build before every `docker compose up`; Docker reuses unchanged layers.
+    pull_policy: build
     build:
       context: ./
       dockerfile: Dockerfile

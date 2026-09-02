@@ -20,14 +20,19 @@ val quarkusPlatformGroupId: String by project
 val quarkusPlatformArtifactId: String by project
 val quarkusPlatformVersion: String by project
 
-/*
-* Forcing protobuf versions to avoid conflicts with Quarkus dependencies.
-* Make it same as in Wire SDK!
- */
+// Keep runtime libraries compatible with the Wire SDK instead of Quarkus' older BOM pins.
 configurations.all {
     resolutionStrategy {
-        force("com.google.protobuf:protobuf-java:4.33.0")
-        force("com.google.protobuf:protobuf-kotlin:4.33.0")
+        force("com.google.protobuf:protobuf-java:4.33.5")
+        force("com.google.protobuf:protobuf-kotlin:4.33.5")
+        force("org.jetbrains.kotlin:kotlin-stdlib:2.3.21")
+        force("org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.3.21")
+        force("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.3.21")
+        force("org.jetbrains.kotlin:kotlin-reflect:2.3.21")
+        force("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
+        force("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0")
+        force("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.11.0")
+        force("org.jetbrains.kotlinx:kotlinx-coroutines-slf4j:1.11.0")
     }
 }
 
@@ -56,10 +61,10 @@ dependencies {
 
     // Other project dependencies
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
     implementation("com.rubiconproject.oss:jchronic:0.2.8")
     implementation("io.arrow-kt:arrow-core:2.1.2")
-    implementation("com.wire:wire-apps-jvm-sdk:0.0.18")
+    implementation("com.wire:wire-apps-jvm-sdk:0.2.1")
 
     // Test dependencies
     testImplementation("io.quarkus:quarkus-junit5")

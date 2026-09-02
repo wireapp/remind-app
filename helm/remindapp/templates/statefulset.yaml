@@ -56,11 +56,6 @@ spec:
               value: {{ .value | quote }}
             {{- end }}
             {{- if .Values.secrets.secretName }}
-            - name: WIRE_SDK_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secrets.secretName }}
-                  key: WIRE_SDK_PASSWORD
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:

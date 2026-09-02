@@ -1,11 +1,5 @@
 # Staging environment overrides
 env:
-  - name: WIRE_SDK_USER_ID
-    value: "2f147822-a4ee-457f-8138-e904b046757e"
-  - name: WIRE_SDK_EMAIL
-    value: "luca.rospocher+staging.remind.app@wire.com"
-  - name: WIRE_SDK_ENVIRONMENT
-    value: "staging.zinfra.io"
   - name: DB_USER
     value: "remind-app-user"
   - name: DB_URL
