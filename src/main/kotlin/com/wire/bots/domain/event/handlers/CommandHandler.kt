@@ -16,6 +16,11 @@ import com.wire.bots.infrastructure.utils.CronInterpreter
 import com.wire.bots.infrastructure.utils.UsageMetrics
 import com.wire.sdk.model.WireMessage
 import org.slf4j.LoggerFactory
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Date
+import java.util.Locale
 import java.util.UUID
 
 @DomainComponent
@@ -113,7 +118,7 @@ class CommandHandler(
                 val reminder = reminders.find { it.taskId == command.reminderId }
                 if (reminder != null) {
                     deleteReminder.invoke(reminder.taskId, reminder.conversationId).flatMap {
-                        val confirmationText = "The reminder '${reminder.task}' was deleted."
+                        val confirmationText = BuildMsg.createDeletedMessage(reminder)
                         if (isButtonAction) {
                             // Edit the original message to indicate deletion
                             outgoingMessageRepository.editCompositeMessage(
@@ -225,32 +230,44 @@ object BuildMsg {
         Either.catch {
             when (val reminder = reminderNextSchedule.reminder) {
                 is Reminder.SingleReminder -> {
-                    "I will remind you to **'${reminder.task}'** at:\n" +
-                        "**${reminderNextSchedule.nextSchedules.first()}**.\n"
+                    "🔔 Reminder created · “${reminder.task}” · ${scheduleText(reminder)}"
                 }
 
                 is Reminder.RecurringReminder -> {
-                    "I will periodically remind you to **'${reminder.task}'**.\n" +
+                    "🔔 Reminder created · “${reminder.task}” · ${scheduleText(reminder)}\n" +
                         "\nThe next ${reminderNextSchedule.nextSchedules.size} " +
                         "schedules for the reminder is:\n" +
                         reminderNextSchedule.nextSchedules.joinToString("\n") {
-                            "- $it"
+                            "- ${formatSchedule(it)}"
                         }
                 }
             }
         }
 
-    fun createListMessage(reminder: Reminder): String {
-        val message = "'${reminder.task}' at: ${
-            when (reminder) {
-                is Reminder.SingleReminder -> reminder.scheduledAt
-                is Reminder.RecurringReminder -> CronInterpreter.cronToText(
-                    reminder.scheduledCron
-                )
-            }
-        }"
-        return message
-    }
+    fun createListMessage(reminder: Reminder): String =
+        "🔔 “${reminder.task}” · ${scheduleText(reminder)} (ID: ${reminder.taskId})"
+
+    fun createDeletedMessage(reminder: Reminder): String =
+        "🗑️ Reminder deleted · “${reminder.task}” · ${scheduleText(reminder)}"
+
+    private fun scheduleText(reminder: Reminder): String =
+        when (reminder) {
+            is Reminder.SingleReminder -> formatSchedule(reminder.scheduledAt)
+            is Reminder.RecurringReminder -> CronInterpreter.cronToText(reminder.scheduledCron)
+        }
+
+    /**
+     * Reminders are parsed (jchronic) and fired (Quartz) in the JVM default zone, so schedules
+     * are rendered in that same zone. The zone is shown to keep the value unambiguous.
+     */
+    private val dateFormatter: DateTimeFormatter =
+        DateTimeFormatter
+            .ofPattern("EEE d MMM yyyy 'at' HH:mm z", Locale.ENGLISH)
+            .withZone(ZoneId.systemDefault())
+
+    private fun formatSchedule(instant: Instant): String = dateFormatter.format(instant)
+
+    private fun formatSchedule(date: Date): String = dateFormatter.format(date.toInstant())
 
     val welcomeText =
         "👋 Hi, I'm the Remind App. Thanks for adding me to the conversation.\n" +
