@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: quay.io/wire/jenkins-app
+  repository: quay.io/wire/remind-app
   pullPolicy: IfNotPresent
   tag: "latest"
 
