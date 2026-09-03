@@ -275,4 +275,64 @@ class EventMapperTest {
             assertEquals("task", reminder.task)
         }
     }
+
+    @Test
+    fun givenButtonActionEvent_whenButtonIdIsUuid_ThenReturnDeleteReminderCommand() {
+        val reminderId = "11111111-1111-1111-1111-111111111111"
+        val senderId = "22222222-2222-2222-2222-222222222222"
+        val referencedMessageId = "33333333-3333-3333-3333-333333333333"
+        val buttonActionEventDTO = ButtonActionEventDTO(
+            type = EventTypeDTO.BUTTON_ACTION,
+            userId = senderId,
+            conversationId = TEST_CONVERSATION_ID,
+            buttonId = reminderId,
+            referencedMessageId = referencedMessageId
+        )
+
+        val event = EventMapper.fromEvent(buttonActionEventDTO)
+
+        event.shouldSucceed {
+            assertEquals(
+                Command.DeleteReminder(
+                    conversationId = TEST_CONVERSATION_ID,
+                    reminderId = reminderId,
+                    referencedMessageId = referencedMessageId,
+                    senderId = QualifiedId(UUID.fromString(senderId), "")
+                ),
+                it
+            )
+        }
+    }
+
+    @Test
+    fun givenButtonActionEvent_whenButtonIdIsNotUuidNorCommand_ThenReturnSkip() {
+        val buttonActionEventDTO = ButtonActionEventDTO(
+            type = EventTypeDTO.BUTTON_ACTION,
+            userId = "22222222-2222-2222-2222-222222222222",
+            conversationId = TEST_CONVERSATION_ID,
+            buttonId = "not-a-uuid"
+        )
+
+        val event = EventMapper.fromEvent(buttonActionEventDTO)
+
+        event.shouldFail {
+            assertInstanceOf(BotError.Skip::class.java, it)
+        }
+    }
+
+    @Test
+    fun givenButtonActionEvent_whenButtonIdIsDeleteCommand_ThenRaiseUnknownCommandError() {
+        val buttonActionEventDTO = ButtonActionEventDTO(
+            type = EventTypeDTO.BUTTON_ACTION,
+            userId = "22222222-2222-2222-2222-222222222222",
+            conversationId = TEST_CONVERSATION_ID,
+            buttonId = "/remind delete 12345"
+        )
+
+        val event = EventMapper.fromEvent(buttonActionEventDTO)
+
+        event.shouldFail {
+            assertInstanceOf(BotError.Unknown::class.java, it)
+        }
+    }
 }

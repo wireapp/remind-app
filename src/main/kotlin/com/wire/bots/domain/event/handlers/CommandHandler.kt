@@ -170,11 +170,19 @@ class CommandHandler(
             messageContent = "There are no reminders yet in this conversation."
         )
 
-    private fun sendReminderNotFoundMessage(command: Command.DeleteReminder) =
-        outgoingMessageRepository.sendMessage(
-            conversationId = command.conversationId,
-            messageContent = "❌ The reminder with id '${command.reminderId}' was not found."
+    private fun sendReminderNotFoundMessage(
+        command: Command.DeleteReminder
+    ): Either<Throwable, Unit> {
+        // The id is only useful for debugging, users never see it.
+        logger.info(
+            "Reminder to delete was not found. reminderId: ${command.reminderId}, " +
+                "conversationId: ${command.conversationId}"
         )
+        return outgoingMessageRepository.sendMessage(
+            conversationId = command.conversationId,
+            messageContent = "❌ This reminder no longer exists — it may have already been deleted."
+        )
+    }
 
     private fun sendButtonActionConfirmationMessage(command: Command.DeleteReminder) =
         outgoingMessageRepository.sendButtonActionConfirmation(
