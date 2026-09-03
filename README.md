@@ -11,7 +11,7 @@ This is an app that can create reminders for conversation, and send a message wh
 - Set one-time reminders
 - Set recurrent reminders (e.g., every Monday)
 - List active reminders
-- Delete reminders
+- Delete reminders (with the Delete button on each reminder)
 
 > [!IMPORTANT]  
 > As of now, the app only supports a maximum of 5 active reminders per group.
@@ -51,8 +51,8 @@ This is an app that can create reminders for conversation, and send a message wh
 
 - `/remind help` (displays help about command usage)
 - `/remind list` (list the active reminders set in the conversation)
-- `/remind delete <reminder-identifier>` (deletes the target reminder, the identifier can be obtained from the list
-  command)
+
+To delete a reminder, use the **Delete** button shown next to each reminder in the `/remind list` response.
 
 ## Development setup
 
@@ -121,5 +121,3 @@ If you want to learn more about building native executables, please consult http
 - Kotlin ([guide](https://quarkus.io/guides/kotlin)): Write your services in Kotlin
 - JDBC Driver - PostgreSQL ([guide](https://quarkus.io/guides/datasource)): Connect to the PostgreSQL database via JDBC
 
-## Roadmap:
-- **Add buttons to delete reminders:** to make it easier for users to manage their reminders.

@@ -43,9 +43,7 @@ object EventMapper {
                     } else {
                         parseCommand(
                             conversationId = eventDTO.conversationId,
-                            rawCommand = buttonId,
-                            referencedMessageId = eventDTO.referencedMessageId,
-                            senderId = senderId
+                            rawCommand = buttonId
                         )
                     }
                 }
@@ -65,18 +63,14 @@ object EventMapper {
      */
     private fun parseCommand(
         conversationId: QualifiedId,
-        rawCommand: String,
-        referencedMessageId: String? = null,
-        senderId: QualifiedId? = null
+        rawCommand: String
     ): Either<BotError, Command> =
         either {
             val words = rawCommand.split(COMMAND_EXPRESSION)
             if (words[0] == "/remind") {
                 return parseCommandArgs(
                     conversationId = conversationId,
-                    args = rawCommand.substringAfter("/remind").trimStart(),
-                    referencedMessageId = referencedMessageId,
-                    senderId = senderId
+                    args = rawCommand.substringAfter("/remind").trimStart()
                 )
             }
             return BotError.Skip.left()
@@ -84,17 +78,12 @@ object EventMapper {
 
     private fun parseCommandArgs(
         conversationId: QualifiedId,
-        args: String,
-        referencedMessageId: String? = null,
-        senderId: QualifiedId? = null
+        args: String
     ): Either<BotError, Command> =
         when {
             args.trim() == "help" -> Command.Help(conversationId).right()
             args.trim() == "list" -> Command.ListReminders(conversationId).right()
             args.startsWith("to") -> parseToCommand(conversationId, args)
-            args.startsWith(
-                "delete"
-            ) -> parseDeleteCommand(conversationId, args, referencedMessageId, senderId)
             else ->
                 BotError
                     .Unknown(
@@ -145,30 +134,6 @@ object EventMapper {
             }
         }
     }
-
-    private fun parseDeleteCommand(
-        conversationId: QualifiedId,
-        args: String,
-        referencedMessageId: String? = null,
-        senderId: QualifiedId? = null
-    ): Either<BotError, Command> {
-        val reminderId = args.substringAfter("delete").trim()
-        return if (reminderId.isBlank()) {
-            BotError
-                .ReminderError(
-                    conversationId = conversationId,
-                    errorType = BotError.ErrorType.INVALID_REMINDER_ID
-                ).left()
-        } else {
-            Command
-                .DeleteReminder(
-                    conversationId = conversationId,
-                    reminderId = reminderId,
-                    referencedMessageId = referencedMessageId,
-                    senderId = senderId
-                ).right()
-        }
-    }
 }
 
 internal val COMMAND_EXPRESSION: Regex = "\\s+".toRegex()
@@ -179,6 +144,5 @@ internal val COMMAND_HINT =
     /remind help
     /remind list
     /remind to "what" "when"
-    /remind delete <reminderId>
     ```
     """.trimIndent()

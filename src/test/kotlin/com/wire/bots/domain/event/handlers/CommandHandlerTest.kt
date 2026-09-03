@@ -30,7 +30,7 @@ class CommandHandlerTest {
         val msg = BuildMsg.helpMessage
         assertTrue(msg.contains("/remind to \"do something\""))
         assertTrue(msg.contains("/remind list"))
-        assertTrue(msg.contains("/remind delete <reminderId>"))
+        assertTrue(msg.contains("Delete button"))
     }
 
     @DisplayName(
@@ -110,7 +110,7 @@ class CommandHandlerTest {
         result.fold({ fail("expected success: $it") }) {}
 
         verify { usageMetrics.onHelpCommand() }
-        val commands = listOf("/remind to", "/remind list", "/remind delete")
+        val commands = listOf("/remind to", "/remind list")
         assertTrue(commands.all { command -> slot.captured.contains(command) })
     }
 

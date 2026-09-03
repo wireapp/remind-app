@@ -170,11 +170,19 @@ class CommandHandler(
             messageContent = "There are no reminders yet in this conversation."
         )
 
-    private fun sendReminderNotFoundMessage(command: Command.DeleteReminder) =
-        outgoingMessageRepository.sendMessage(
-            conversationId = command.conversationId,
-            messageContent = "❌ The reminder with id '${command.reminderId}' was not found."
+    private fun sendReminderNotFoundMessage(
+        command: Command.DeleteReminder
+    ): Either<Throwable, Unit> {
+        // The id is only useful for debugging, users never see it.
+        logger.info(
+            "Reminder to delete was not found. reminderId: ${command.reminderId}, " +
+                "conversationId: ${command.conversationId}"
         )
+        return outgoingMessageRepository.sendMessage(
+            conversationId = command.conversationId,
+            messageContent = "❌ This reminder no longer exists — it may have already been deleted."
+        )
+    }
 
     private fun sendButtonActionConfirmationMessage(command: Command.DeleteReminder) =
         outgoingMessageRepository.sendButtonActionConfirmation(
@@ -217,11 +225,8 @@ object BuildMsg {
             ```
             /remind list
             ```
-            4. You can delete a reminder with the following command:
-            (Get the <reminderId> from the `/remind list` command)
-            ```
-            /remind delete <reminderId>
-            ```
+            4. Each reminder in the `/remind list` response has a Delete button,
+            use it to remove that reminder.
         """.trimIndent()
 
     fun createReminderCreationConfirmationMessage(
@@ -245,7 +250,7 @@ object BuildMsg {
         }
 
     fun createListMessage(reminder: Reminder): String =
-        "🔔 “${reminder.task}” · ${scheduleText(reminder)} (ID: ${reminder.taskId})"
+        "🔔 “${reminder.task}” · ${scheduleText(reminder)}"
 
     fun createDeletedMessage(reminder: Reminder): String =
         "🗑️ Reminder deleted · “${reminder.task}” · ${scheduleText(reminder)}"
@@ -272,7 +277,7 @@ object BuildMsg {
     val welcomeText =
         "👋 Hi, I'm the Remind App. Thanks for adding me to the conversation.\n" +
             "You can use me to create reminders for your conversations, or yourself.\n" +
-            "I'm here to help make everyday work a little easier.\n" +
+            "I'm here to help make everyday work a little easier.\n\n" +
             "Choose a command to get started:\n" +
             helpMessage
 }
