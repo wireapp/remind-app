@@ -168,32 +168,15 @@ class EventMapperTest {
     }
 
     @Test
-    fun givenTextEvent_whenTextIsDeleteWithValidId_ThenReturnDeleteReminderCommand() {
+    fun givenTextEvent_whenTextIsDeleteCommand_ThenRaiseUnknownCommandError() {
         val messageEventDTO = MessageEventDTO(
             type = EventTypeDTO.NEW_TEXT,
             conversationId = TEST_CONVERSATION_ID,
             text = TextContent("/remind delete 12345")
         )
         val event = EventMapper.fromEvent(messageEventDTO)
-        event.shouldSucceed {
-            assertEquals(Command.DeleteReminder(TEST_CONVERSATION_ID, "12345"), it)
-        }
-    }
-
-    @Test
-    fun givenTextEvent_whenTextIsDeleteWithBlankId_ThenRaiseInvalidReminderIdError() {
-        val messageEventDTO = MessageEventDTO(
-            type = EventTypeDTO.NEW_TEXT,
-            conversationId = TEST_CONVERSATION_ID,
-            text = TextContent("/remind delete   ")
-        )
-        val event = EventMapper.fromEvent(messageEventDTO)
         event.shouldFail {
-            assertInstanceOf(BotError.ReminderError::class.java, it)
-            assertEquals(
-                BotError.ErrorType.INVALID_REMINDER_ID,
-                (it as BotError.ReminderError).errorType
-            )
+            assertInstanceOf(BotError.Unknown::class.java, it)
         }
     }
 

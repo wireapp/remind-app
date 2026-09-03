@@ -90,9 +90,6 @@ sealed class BotError(
         EMPTY_REMINDER_TASK(
             "❌ Reminder message can't be empty. Please provide what you want to be reminded about."
         ),
-        INVALID_REMINDER_ID(
-            "❌ Invalid reminder ID. Please provide a valid reminder ID to delete."
-        ),
         INVALID_REMINDER_USAGE(
             "❌ Invalid reminder usage. Please use the correct format:\n" +
                 """

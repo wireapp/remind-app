@@ -217,11 +217,8 @@ object BuildMsg {
             ```
             /remind list
             ```
-            4. You can delete a reminder with the following command:
-            (Get the <reminderId> from the `/remind list` command)
-            ```
-            /remind delete <reminderId>
-            ```
+            4. Each reminder in the `/remind list` response has a Delete button,
+            use it to remove that reminder.
         """.trimIndent()
 
     fun createReminderCreationConfirmationMessage(
@@ -245,7 +242,7 @@ object BuildMsg {
         }
 
     fun createListMessage(reminder: Reminder): String =
-        "🔔 “${reminder.task}” · ${scheduleText(reminder)} (ID: ${reminder.taskId})"
+        "🔔 “${reminder.task}” · ${scheduleText(reminder)}"
 
     fun createDeletedMessage(reminder: Reminder): String =
         "🗑️ Reminder deleted · “${reminder.task}” · ${scheduleText(reminder)}"
