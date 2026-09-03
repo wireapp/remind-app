@@ -269,7 +269,7 @@ object BuildMsg {
     val welcomeText =
         "👋 Hi, I'm the Remind App. Thanks for adding me to the conversation.\n" +
             "You can use me to create reminders for your conversations, or yourself.\n" +
-            "I'm here to help make everyday work a little easier.\n" +
+            "I'm here to help make everyday work a little easier.\n\n" +
             "Choose a command to get started:\n" +
             helpMessage
 }
