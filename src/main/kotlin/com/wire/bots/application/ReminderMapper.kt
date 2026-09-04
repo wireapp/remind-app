@@ -13,13 +13,13 @@ import com.wire.bots.domain.usecase.ValidateReminder
 import com.wire.bots.infrastructure.utils.CronInterpreter
 import com.wire.sdk.model.QualifiedId
 import java.time.ZoneId
-import java.util.Calendar
 import java.util.TimeZone
 import java.util.UUID
 
 object ReminderMapper {
     private val INVALID_TIME_TOKENS = listOf("hour", "minute", "second")
     private val VALID_RECURRENT_TOKENS = listOf("every")
+    private val timeZoneSwitchLock = Any()
 
     private fun isRecurrentSchedule(schedule: String): Boolean =
         VALID_RECURRENT_TOKENS.any { schedule.contains(it) }
@@ -66,12 +66,16 @@ object ReminderMapper {
         zoneId: ZoneId
     ): Either<BotError.ReminderError, Command.NewReminder> {
         return runCatching {
-            val now = Calendar.getInstance(TimeZone.getTimeZone(zoneId))
-            val parsedSchedule = Chronic.parse(
-                schedule,
-                Options(Pointer.PointerType.FUTURE, now, true, 6)
-            )
-            val parsedDate = parsedSchedule.beginCalendar.toInstant()
+            val parsedDate = synchronized(timeZoneSwitchLock) {
+                val previousDefault = TimeZone.getDefault()
+                try {
+                    TimeZone.setDefault(TimeZone.getTimeZone(zoneId))
+                    val parsedSchedule = Chronic.parse(schedule, Options(Pointer.PointerType.FUTURE))
+                    parsedSchedule.beginCalendar.toInstant()
+                } finally {
+                    TimeZone.setDefault(previousDefault)
+                }
+            }
             ValidateReminder
                 .validateScheduledTimeInFuture(
                     parsedDate,
