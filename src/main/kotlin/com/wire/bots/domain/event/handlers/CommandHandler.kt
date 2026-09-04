@@ -85,7 +85,7 @@ class CommandHandler(
             .flatMap {
                 outgoingMessageRepository.sendMessage(
                     conversationId = command.conversationId,
-                    messageContent = "🌍 Timezone for this conversation set to `${command.label}`."
+                    messageContent = "🌍 Remind App Timezone for this conversation set to `${command.label}`."
                 )
             }
 
@@ -93,7 +93,7 @@ class CommandHandler(
         val current = conversationSettingsRepository.getTimezone(command.conversationId)
         return outgoingMessageRepository.sendMessage(
             conversationId = command.conversationId,
-            messageContent = "🌍 This conversation's timezone is currently set to `${current.id}`."
+            messageContent = " 🌍 Remind App timezone for this conversation is currently set to `${current.id}`."
         )
     }
 
