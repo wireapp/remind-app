@@ -5,8 +5,10 @@ import arrow.core.flatMap
 import com.wire.bots.domain.DomainComponent
 import com.wire.bots.domain.event.Command
 import com.wire.bots.domain.message.OutgoingMessageRepository
+import com.wire.bots.domain.reminder.ConversationSettingsRepository
 import com.wire.bots.domain.reminder.Reminder
 import com.wire.bots.domain.reminder.ReminderNextSchedule
+import com.wire.bots.domain.reminder.SupportedTimezones
 import com.wire.bots.domain.reminder.getNextSchedules
 import com.wire.bots.domain.usecase.DeleteReminderUseCase
 import com.wire.bots.domain.usecase.ListRemindersInConversation
@@ -29,14 +31,15 @@ class CommandHandler(
     private val saveReminderSchedule: SaveReminderSchedule,
     private val listRemindersInConversation: ListRemindersInConversation,
     private val deleteReminder: DeleteReminderUseCase,
-    private val usageMetrics: UsageMetrics
+    private val usageMetrics: UsageMetrics,
+    private val conversationSettingsRepository: ConversationSettingsRepository
 ) : EventHandler<Command> {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
     override fun onEvent(event: Command): Either<Throwable, Unit> {
         logger.info(
             "Event will be processed. Event: ${event::class.simpleName}, " +
-                "conversationId: ${event.conversationId}"
+                    "conversationId: ${event.conversationId}"
         )
 
         val result = when (event) {
@@ -62,25 +65,47 @@ class CommandHandler(
                 usageMetrics.onDeleteCommand()
                 deleteReminder(event)
             }
+
+            is Command.SetTimezone -> setTimezone(event)
+
+            is Command.ShowTimezone -> showTimezone(event)
         }
 
         logger.info(
             "Event is processed successfully. Event: ${event::class.simpleName}, " +
-                "conversationId: ${event.conversationId}"
+                    "conversationId: ${event.conversationId}"
         )
 
         return result
     }
 
+    private fun setTimezone(command: Command.SetTimezone): Either<Throwable, Unit> =
+        conversationSettingsRepository
+            .setTimezone(command.conversationId, command.zoneId)
+            .flatMap {
+                outgoingMessageRepository.sendMessage(
+                    conversationId = command.conversationId,
+                    messageContent = "🌍 Timezone for this conversation set to `${command.label}`."
+                )
+            }
+
+    private fun showTimezone(command: Command.ShowTimezone): Either<Throwable, Unit> {
+        val current = conversationSettingsRepository.getTimezone(command.conversationId)
+        return outgoingMessageRepository.sendMessage(
+            conversationId = command.conversationId,
+            messageContent = "🌍 This conversation's timezone is currently set to `${current.id}`."
+        )
+    }
+
     private fun getReminderListMessages(command: Command.ListReminders): Either<Throwable, Unit> =
         listRemindersInConversation(command.conversationId).flatMap { reminders ->
             (
-                if (reminders.isEmpty()) {
-                    sendNoRemindersInConversationMessage(command)
-                } else {
-                    sendListRemindersReply(command, reminders)
-                }
-            )
+                    if (reminders.isEmpty()) {
+                        sendNoRemindersInConversationMessage(command)
+                    } else {
+                        sendListRemindersReply(command, reminders)
+                    }
+                    )
         }
 
     private fun handleNewReminder(command: Command.NewReminder): Either<Throwable, Unit> =
@@ -198,31 +223,34 @@ class CommandHandler(
 
 object BuildMsg {
     val helpMessage =
-        """
-            1. You can create one time reminders, for example:
-            ```
-            /remind to "do something" "in 5 minutes"
-            /remind to "do something" "today at 21:00"
-            /remind to "do something" "18/09/2025 at 09:45"
-            /remind to "do something" "next monday at 17:00"
-            ```
-            2. You can also create recurring reminders, for example:
-            ```
-            /remind to "Start the daily stand up" "every day at 10:00"
-            /remind to "Start the weekly stand up" "every weekday at 10:00"
-            /remind to "Start the weekly stand up" "every Monday at 10:00"
-            /remind to "Start the weekly stand up" "every MON, Tue, Friday at 10:00"
-            ```
-            3. You can list all the active reminders in the conversation with the following command:
-            ```
-            /remind list
-            ```
-            4. You can delete a reminder with the following command:
-            (Get the <reminderId> from the `/remind list` command)
-            ```
-            /remind delete <reminderId>
-            ```
-        """.trimIndent()
+        "1. You can create one time reminders, for example:\n" +
+                "```\n" +
+                "/remind to \"do something\" \"in 5 minutes\"\n" +
+                "/remind to \"do something\" \"today at 21:00\"\n" +
+                "/remind to \"do something\" \"18/09/2025 at 09:45\"\n" +
+                "/remind to \"do something\" \"next monday at 17:00\"\n" +
+                "```\n" +
+                "2. You can also create recurring reminders, for example:\n" +
+                "```\n" +
+                "/remind to \"Start the daily stand up\" \"every day at 10:00\"\n" +
+                "/remind to \"Start the weekly stand up\" \"every weekday at 10:00\"\n" +
+                "/remind to \"Start the weekly stand up\" \"every Monday at 10:00\"\n" +
+                "/remind to \"Start the weekly stand up\" \"every MON, Tue, Friday at 10:00\"\n" +
+                "```\n" +
+                "3. You can list all the active reminders in the conversation with the following command:\n" +
+                "```\n" +
+                "/remind list\n" +
+                "```\n" +
+                "Each reminder has a Delete button you can use to remove it.\n" +
+                "4. All reminders use this conversation's timezone, which defaults to CET until someone sets it:\n" +
+                "```\n" +
+                "/remind set timezone <zone>\n" +
+                "```\n" +
+                "Supported values: ${SupportedTimezones.helpBlock()}\n" +
+                "5. You can check which timezone this conversation is currently using with:\n" +
+                "```\n" +
+                "/remind show timezone\n" +
+                "```"
 
     fun createReminderCreationConfirmationMessage(
         reminderNextSchedule: ReminderNextSchedule
@@ -235,11 +263,11 @@ object BuildMsg {
 
                 is Reminder.RecurringReminder -> {
                     "🔔 Reminder created · “${reminder.task}” · ${scheduleText(reminder)}\n" +
-                        "\nThe next ${reminderNextSchedule.nextSchedules.size} " +
-                        "schedules for the reminder is:\n" +
-                        reminderNextSchedule.nextSchedules.joinToString("\n") {
-                            "- ${formatSchedule(it)}"
-                        }
+                            "\nThe next ${reminderNextSchedule.nextSchedules.size} " +
+                            "schedules for the reminder is:\n" +
+                            reminderNextSchedule.nextSchedules.joinToString("\n") {
+                                "- ${formatSchedule(it, reminder.zoneId)}"
+                            }
                 }
             }
         }
@@ -252,27 +280,29 @@ object BuildMsg {
 
     private fun scheduleText(reminder: Reminder): String =
         when (reminder) {
-            is Reminder.SingleReminder -> formatSchedule(reminder.scheduledAt)
-            is Reminder.RecurringReminder -> CronInterpreter.cronToText(reminder.scheduledCron)
+            is Reminder.SingleReminder -> formatSchedule(reminder.scheduledAt, reminder.zoneId)
+            is Reminder.RecurringReminder ->
+                "${CronInterpreter.cronToText(reminder.scheduledCron)} (${reminder.zoneId})"
         }
 
-    /**
-     * Reminders are parsed (jchronic) and fired (Quartz) in the JVM default zone, so schedules
-     * are rendered in that same zone. The zone is shown to keep the value unambiguous.
-     */
-    private val dateFormatter: DateTimeFormatter =
+    private fun formatSchedule(
+        instant: Instant,
+        zoneId: ZoneId
+    ): String =
         DateTimeFormatter
             .ofPattern("EEE d MMM yyyy 'at' HH:mm z", Locale.ENGLISH)
-            .withZone(ZoneId.systemDefault())
+            .withZone(zoneId)
+            .format(instant)
 
-    private fun formatSchedule(instant: Instant): String = dateFormatter.format(instant)
-
-    private fun formatSchedule(date: Date): String = dateFormatter.format(date.toInstant())
+    private fun formatSchedule(
+        date: Date,
+        zoneId: ZoneId
+    ): String = formatSchedule(date.toInstant(), zoneId)
 
     val welcomeText =
         "👋 Hi, I'm the Remind App. Thanks for adding me to the conversation.\n" +
-            "You can use me to create reminders for your conversations, or yourself.\n" +
-            "I'm here to help make everyday work a little easier.\n" +
-            "Choose a command to get started:\n" +
-            helpMessage
+                "You can use me to create reminders for your conversations, or yourself.\n" +
+                "I'm here to help make everyday work a little easier.\n" +
+                "Choose a command to get started:\n" +
+                helpMessage
 }

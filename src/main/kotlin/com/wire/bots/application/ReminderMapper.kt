@@ -9,15 +9,17 @@ import com.mdimension.jchronic.tags.Pointer
 import com.wire.bots.domain.event.BotError
 import com.wire.bots.domain.event.Command
 import com.wire.bots.domain.reminder.Reminder
-import java.util.UUID
-import com.wire.sdk.model.QualifiedId
 import com.wire.bots.domain.usecase.ValidateReminder
 import com.wire.bots.infrastructure.utils.CronInterpreter
+import com.wire.sdk.model.QualifiedId
+import java.time.ZoneId
+import java.util.Calendar
+import java.util.TimeZone
+import java.util.UUID
 
 object ReminderMapper {
     private val INVALID_TIME_TOKENS = listOf("hour", "minute", "second")
     private val VALID_RECURRENT_TOKENS = listOf("every")
-    // todo: expand later, each, daily, weekly, etc.
 
     private fun isRecurrentSchedule(schedule: String): Boolean =
         VALID_RECURRENT_TOKENS.any { schedule.contains(it) }
@@ -28,7 +30,8 @@ object ReminderMapper {
     fun parseReminder(
         conversationId: QualifiedId,
         task: String,
-        schedule: String
+        schedule: String,
+        zoneId: ZoneId = ZoneId.of("UTC")
     ): Either<BotError, Command> {
         ValidateReminder.validateTaskNotEmpty(task, conversationId)?.let { return it.left() }
         return when {
@@ -43,13 +46,15 @@ object ReminderMapper {
                 parseRecurrentTask(
                     conversationId = conversationId,
                     task = task,
-                    schedule = schedule
+                    schedule = schedule,
+                    zoneId = zoneId
                 )
             }
             else -> parseSingleTask(
                 conversationId = conversationId,
                 task = task,
-                schedule = schedule
+                schedule = schedule,
+                zoneId = zoneId
             )
         }
     }
@@ -57,12 +62,14 @@ object ReminderMapper {
     private fun parseSingleTask(
         schedule: String,
         conversationId: QualifiedId,
-        task: String
+        task: String,
+        zoneId: ZoneId
     ): Either<BotError.ReminderError, Command.NewReminder> {
         return runCatching {
+            val now = Calendar.getInstance(TimeZone.getTimeZone(zoneId))
             val parsedSchedule = Chronic.parse(
                 schedule,
-                Options(Pointer.PointerType.FUTURE)
+                Options(Pointer.PointerType.FUTURE, now, true, 6)
             )
             val parsedDate = parsedSchedule.beginCalendar.toInstant()
             ValidateReminder
@@ -77,7 +84,8 @@ object ReminderMapper {
                         conversationId = conversationId,
                         taskId = UUID.randomUUID().toString(),
                         task = task,
-                        scheduledAt = parsedDate
+                        scheduledAt = parsedDate,
+                        zoneId = zoneId
                     )
                 ).right()
         }.getOrElse {
@@ -92,7 +100,8 @@ object ReminderMapper {
     private fun parseRecurrentTask(
         conversationId: QualifiedId,
         task: String,
-        schedule: String
+        schedule: String,
+        zoneId: ZoneId
     ): Either<BotError.ReminderError, Command.NewReminder> =
         runCatching {
             Command
@@ -102,7 +111,8 @@ object ReminderMapper {
                         conversationId = conversationId,
                         taskId = UUID.randomUUID().toString(),
                         task = task,
-                        scheduledCron = CronInterpreter.textToCron(schedule)
+                        scheduledCron = CronInterpreter.textToCron(schedule),
+                        zoneId = zoneId
                     )
                 ).right()
         }.getOrElse {

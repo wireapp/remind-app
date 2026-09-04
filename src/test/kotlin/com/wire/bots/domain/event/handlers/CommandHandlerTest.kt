@@ -1,11 +1,12 @@
 package com.wire.bots.domain.event.handlers
 
 import arrow.core.Either
+import com.wire.bots.domain.event.Command
+import com.wire.bots.domain.message.OutgoingMessageRepository
+import com.wire.bots.domain.reminder.ConversationSettingsRepository
 import com.wire.bots.domain.reminder.Reminder
 import com.wire.bots.domain.reminder.ReminderNextSchedule
 import com.wire.bots.domain.reminder.getNextSchedules
-import com.wire.bots.domain.event.Command
-import com.wire.bots.domain.message.OutgoingMessageRepository
 import com.wire.bots.domain.usecase.DeleteReminderUseCase
 import com.wire.bots.domain.usecase.ListRemindersInConversation
 import com.wire.bots.domain.usecase.SaveReminderSchedule
@@ -31,11 +32,13 @@ class CommandHandlerTest {
         assertTrue(msg.contains("/remind to \"do something\""))
         assertTrue(msg.contains("/remind list"))
         assertTrue(msg.contains("/remind delete <reminderId>"))
+        assertTrue(msg.contains("/remind set timezone"))
+        assertTrue(msg.contains("/remind show timezone"))
     }
 
     @DisplayName(
         "createReminderCreationConfirmationMessage for single reminder " +
-            "should include scheduled date"
+                "should include scheduled date"
     )
     @Test
     fun testCreateReminderCreationConfirmationSingleReminderIncludesScheduledDate() {
@@ -59,7 +62,7 @@ class CommandHandlerTest {
 
     @DisplayName(
         "createReminderCreationConfirmationMessage for recurring reminder " +
-            "should list multiple schedules"
+                "should list multiple schedules"
     )
     @Test
     fun testCreateReminderCreationConfirmationRecurringListsSchedules() {
@@ -77,7 +80,6 @@ class CommandHandlerTest {
         )
         either.fold({ fail("expected Right but got Left: $it") }) { msg ->
             assertTrue(msg.contains("Daily meeting") || msg.contains("'Daily meeting'"))
-            // should include at least two of the scheduled dates in text form
             assertTrue(msg.contains(nextSchedules.first().toString().substring(0, 4)))
         }
     }
@@ -89,20 +91,22 @@ class CommandHandlerTest {
         val listRemindersInConversation = mockk<ListRemindersInConversation>()
         val saveReminderSchedule = mockk<SaveReminderSchedule>()
         val deleteReminder = mockk<DeleteReminderUseCase>()
+        val conversationSettingsRepository = mockk<ConversationSettingsRepository>()
         val conversationId = QualifiedId(UUID.randomUUID(), "example.com")
 
         every { usageMetrics.onHelpCommand() } just runs
         val slot = slot<String>()
         every { outgoing.sendMessage(conversationId, capture(slot)) } returns Either.Right(Unit)
         every { listRemindersInConversation.invoke(conversationId) } returns
-            Either.Right(emptyList())
+                Either.Right(emptyList())
 
         val handler = CommandHandler(
             outgoing,
             saveReminderSchedule,
             listRemindersInConversation,
             deleteReminder,
-            usageMetrics
+            usageMetrics,
+            conversationSettingsRepository
         )
 
         val cmd = Command.Help(conversationId = conversationId)
@@ -110,7 +114,7 @@ class CommandHandlerTest {
         result.fold({ fail("expected success: $it") }) {}
 
         verify { usageMetrics.onHelpCommand() }
-        val commands = listOf("/remind to", "/remind list", "/remind delete")
+        val commands = listOf("/remind to", "/remind list", "/remind set timezone")
         assertTrue(commands.all { command -> slot.captured.contains(command) })
     }
 
@@ -121,12 +125,13 @@ class CommandHandlerTest {
         val listRemindersInConversation = mockk<ListRemindersInConversation>()
         val saveReminderSchedule = mockk<SaveReminderSchedule>()
         val deleteReminder = mockk<DeleteReminderUseCase>()
+        val conversationSettingsRepository = mockk<ConversationSettingsRepository>()
         val conversationId = QualifiedId(UUID.randomUUID(), "example.com")
 
         every { usageMetrics.onListCommand() } just runs
         val slot = slot<String>()
         every { listRemindersInConversation.invoke(conversationId) } returns
-            Either.Right(emptyList())
+                Either.Right(emptyList())
         every { outgoing.sendMessage(conversationId, capture(slot)) } returns Either.Right(Unit)
 
         val handler = CommandHandler(
@@ -134,7 +139,8 @@ class CommandHandlerTest {
             saveReminderSchedule,
             listRemindersInConversation,
             deleteReminder,
-            usageMetrics
+            usageMetrics,
+            conversationSettingsRepository
         )
 
         val cmd = Command.ListReminders(conversationId = conversationId)

@@ -1,7 +1,9 @@
 package com.wire.bots.domain.event
 
 import com.wire.bots.domain.reminder.Reminder
+import com.wire.bots.domain.reminder.SupportedTimezones
 import com.wire.sdk.model.QualifiedId
+import java.time.ZoneId
 import java.util.UUID
 
 sealed class Command(
@@ -31,12 +33,29 @@ sealed class Command(
 
     /**
      * Delete reminder event, for the target conversation.
+     * Only triggered via the Delete button on a reminder, not via typed command.
      */
     data class DeleteReminder(
         override val conversationId: QualifiedId,
         val reminderId: String,
         val referencedMessageId: String? = null,
         val senderId: QualifiedId? = null
+    ) : Command(conversationId)
+
+    /**
+     * Set the timezone used for this conversation's future reminders.
+     */
+    data class SetTimezone(
+        override val conversationId: QualifiedId,
+        val zoneId: ZoneId,
+        val label: String
+    ) : Command(conversationId)
+
+    /**
+     * Show the currently configured timezone for this conversation.
+     */
+    data class ShowTimezone(
+        override val conversationId: QualifiedId
     ) : Command(conversationId)
 }
 
@@ -85,25 +104,22 @@ sealed class BotError(
         ),
         PARSE_ERROR(
             "❌ I'm sorry, I didn't catch that. I can get a little confused at times. " +
-                "Please try again with a different format or see examples with `/remind help`."
+                    "Please try again with a different format or see examples with `/remind help`."
         ),
         EMPTY_REMINDER_TASK(
             "❌ Reminder message can't be empty. Please provide what you want to be reminded about."
         ),
-        INVALID_REMINDER_ID(
-            "❌ Invalid reminder ID. Please provide a valid reminder ID to delete."
-        ),
         INVALID_REMINDER_USAGE(
             "❌ Invalid reminder usage. Please use the correct format:\n" +
-                """
-                ```
-                /remind to "What" "When"
-                ```
+                    """
+            /remind to "What" "When"
                 For more examples, check the help command:
-                ```
-                /remind help
-                ```
+            /remind help
                 """.trimIndent()
+        ),
+        INVALID_TIMEZONE(
+            "❌ I don't recognize that timezone. Supported values: " +
+                    SupportedTimezones.helpBlock()
         )
     }
 }

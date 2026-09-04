@@ -2,13 +2,17 @@ package com.wire.bots.application
 
 import com.wire.bots.domain.event.BotError
 import com.wire.bots.domain.event.Command
+import com.wire.bots.domain.reminder.ConversationSettingsRepository
 import com.wire.bots.domain.reminder.Reminder
 import com.wire.bots.shouldFail
 import com.wire.bots.shouldSucceed
 import com.wire.sdk.model.QualifiedId
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Test
+import java.time.ZoneId
 import java.util.UUID
 
 internal val TEST_CONVERSATION_ID = QualifiedId(
@@ -17,20 +21,20 @@ internal val TEST_CONVERSATION_ID = QualifiedId(
 )
 
 class EventMapperTest {
+    private val conversationSettingsRepository = mockk<ConversationSettingsRepository> {
+        every { getTimezone(any()) } returns ZoneId.of("UTC")
+    }
+    private val eventMapper = EventMapper(conversationSettingsRepository)
+
     @Test
     fun givenNotRelevantEvent_whenMapping_ThenReturnSkip() {
-        // given
         val messageEventDTO =
             MessageEventDTO(
                 type = EventTypeDTO.NEW_TEXT,
                 conversationId = TEST_CONVERSATION_ID,
                 text = TextContent("not relevant")
             )
-
-        // when
-        val event = EventMapper.fromEvent(messageEventDTO)
-
-        // then
+        val event = eventMapper.fromEvent(messageEventDTO)
         event.shouldFail {
             assertInstanceOf(BotError.Skip::class.java, it)
         }
@@ -38,18 +42,13 @@ class EventMapperTest {
 
     @Test
     fun givenTextEvent_whenTextIsHelp_ThenReturnHelpCommand() {
-        // given
         val messageEventDTO =
             MessageEventDTO(
                 type = EventTypeDTO.NEW_TEXT,
                 conversationId = TEST_CONVERSATION_ID,
                 text = TextContent("/remind help")
             )
-
-        // when
-        val event = EventMapper.fromEvent(messageEventDTO)
-
-        // then
+        val event = eventMapper.fromEvent(messageEventDTO)
         event.shouldSucceed {
             assertEquals(Command.Help(TEST_CONVERSATION_ID), it)
         }
@@ -57,20 +56,15 @@ class EventMapperTest {
 
     @Test
     fun givenTextEvent_whenTextIsOneTimeRemind_ThenReturnRemindCommandSingle() {
-        // given
         val messageEventDTO =
             MessageEventDTO(
                 type = EventTypeDTO.NEW_TEXT,
                 conversationId = TEST_CONVERSATION_ID,
                 text = TextContent(
-                    """/remind to "join the refinement session" "tomorrow at 11:00"""".trimIndent()
+                    """/remind to "join the refinement session" "tomorrow at 11:00""""
                 )
             )
-
-        // when
-        val event = EventMapper.fromEvent(messageEventDTO)
-
-        // then
+        val event = eventMapper.fromEvent(messageEventDTO)
         event.shouldSucceed {
             assertInstanceOf(Command.NewReminder::class.java, it)
             assertInstanceOf(
@@ -84,20 +78,15 @@ class EventMapperTest {
 
     @Test
     fun givenTextEvent_whenTextIsRecurringRemind_ThenReturnRemindCommandRecurring() {
-        // given
         val messageEventDTO =
             MessageEventDTO(
                 type = EventTypeDTO.NEW_TEXT,
                 conversationId = TEST_CONVERSATION_ID,
                 text = TextContent(
-                    """/remind to "join the daily stand up" "every monday at 10:00"""".trimIndent()
+                    """/remind to "join the daily stand up" "every monday at 10:00""""
                 )
             )
-
-        // when
-        val event = EventMapper.fromEvent(messageEventDTO)
-
-        // then
+        val event = eventMapper.fromEvent(messageEventDTO)
         event.shouldSucceed {
             assertInstanceOf(Command.NewReminder::class.java, it)
             assertInstanceOf(
@@ -111,20 +100,13 @@ class EventMapperTest {
 
     @Test
     fun givenTextEvent_whenTextIsRecurringByTimeIncrementRemind_ThenRaiseError() {
-        // given
         val messageEventDTO =
             MessageEventDTO(
                 type = EventTypeDTO.NEW_TEXT,
                 conversationId = TEST_CONVERSATION_ID,
-                text = TextContent(
-                    """/remind to "drink water" "every 1 hours"""".trimIndent()
-                )
+                text = TextContent("""/remind to "drink water" "every 1 hours"""")
             )
-
-        // when
-        val event = EventMapper.fromEvent(messageEventDTO)
-
-        // then
+        val event = eventMapper.fromEvent(messageEventDTO)
         event.shouldFail {
             assertInstanceOf(BotError.ReminderError::class.java, it)
             assertEquals(
@@ -136,18 +118,13 @@ class EventMapperTest {
 
     @Test
     fun givenTextEvent_whenTextTargetDayInPast_ThenRaiseError() {
-        // given
         val messageEventDTO =
             MessageEventDTO(
                 type = EventTypeDTO.NEW_TEXT,
                 conversationId = TEST_CONVERSATION_ID,
-                text = TextContent("""/remind to "drink water" "yesterday" """.trimIndent())
+                text = TextContent("""/remind to "drink water" "yesterday" """)
             )
-
-        // when
-        val event = EventMapper.fromEvent(messageEventDTO)
-
-        // then
+        val event = eventMapper.fromEvent(messageEventDTO)
         event.shouldFail {
             assertInstanceOf(BotError.ReminderError::class.java, it)
             assertEquals(BotError.ErrorType.DATE_IN_PAST, (it as BotError.ReminderError).errorType)
@@ -161,39 +138,9 @@ class EventMapperTest {
             conversationId = TEST_CONVERSATION_ID,
             text = TextContent("/remind list")
         )
-        val event = EventMapper.fromEvent(messageEventDTO)
+        val event = eventMapper.fromEvent(messageEventDTO)
         event.shouldSucceed {
             assertEquals(Command.ListReminders(TEST_CONVERSATION_ID), it)
-        }
-    }
-
-    @Test
-    fun givenTextEvent_whenTextIsDeleteWithValidId_ThenReturnDeleteReminderCommand() {
-        val messageEventDTO = MessageEventDTO(
-            type = EventTypeDTO.NEW_TEXT,
-            conversationId = TEST_CONVERSATION_ID,
-            text = TextContent("/remind delete 12345")
-        )
-        val event = EventMapper.fromEvent(messageEventDTO)
-        event.shouldSucceed {
-            assertEquals(Command.DeleteReminder(TEST_CONVERSATION_ID, "12345"), it)
-        }
-    }
-
-    @Test
-    fun givenTextEvent_whenTextIsDeleteWithBlankId_ThenRaiseInvalidReminderIdError() {
-        val messageEventDTO = MessageEventDTO(
-            type = EventTypeDTO.NEW_TEXT,
-            conversationId = TEST_CONVERSATION_ID,
-            text = TextContent("/remind delete   ")
-        )
-        val event = EventMapper.fromEvent(messageEventDTO)
-        event.shouldFail {
-            assertInstanceOf(BotError.ReminderError::class.java, it)
-            assertEquals(
-                BotError.ErrorType.INVALID_REMINDER_ID,
-                (it as BotError.ReminderError).errorType
-            )
         }
     }
 
@@ -204,7 +151,7 @@ class EventMapperTest {
             conversationId = TEST_CONVERSATION_ID,
             text = TextContent("/remind to \"\" \"tomorrow\"")
         )
-        val event = EventMapper.fromEvent(messageEventDTO)
+        val event = eventMapper.fromEvent(messageEventDTO)
         event.shouldFail {
             assertInstanceOf(BotError.ReminderError::class.java, it)
             assertEquals(
@@ -221,7 +168,7 @@ class EventMapperTest {
             conversationId = TEST_CONVERSATION_ID,
             text = TextContent("/remind to \"task\" \"\"")
         )
-        val event = EventMapper.fromEvent(messageEventDTO)
+        val event = eventMapper.fromEvent(messageEventDTO)
         event.shouldFail {
             assertInstanceOf(BotError.ReminderError::class.java, it)
             assertEquals(
@@ -238,7 +185,7 @@ class EventMapperTest {
             conversationId = TEST_CONVERSATION_ID,
             text = TextContent("/remind to \"task\"")
         )
-        val event = EventMapper.fromEvent(messageEventDTO)
+        val event = eventMapper.fromEvent(messageEventDTO)
         event.shouldFail {
             assertInstanceOf(BotError.ReminderError::class.java, it)
             assertEquals(
@@ -255,7 +202,7 @@ class EventMapperTest {
             conversationId = TEST_CONVERSATION_ID,
             text = TextContent("/remind to task tomorrow")
         )
-        val event = EventMapper.fromEvent(messageEventDTO)
+        val event = eventMapper.fromEvent(messageEventDTO)
         event.shouldFail {
             assertInstanceOf(BotError.ReminderError::class.java, it)
             assertEquals(
@@ -272,7 +219,20 @@ class EventMapperTest {
             conversationId = TEST_CONVERSATION_ID,
             text = TextContent("/remind foo")
         )
-        val event = EventMapper.fromEvent(messageEventDTO)
+        val event = eventMapper.fromEvent(messageEventDTO)
+        event.shouldFail {
+            assertInstanceOf(BotError.Unknown::class.java, it)
+        }
+    }
+
+    @Test
+    fun givenTextEvent_whenTextIsTypedDeleteCommand_ThenReturnUnknownError() {
+        val messageEventDTO = MessageEventDTO(
+            type = EventTypeDTO.NEW_TEXT,
+            conversationId = TEST_CONVERSATION_ID,
+            text = TextContent("/remind delete 12345")
+        )
+        val event = eventMapper.fromEvent(messageEventDTO)
         event.shouldFail {
             assertInstanceOf(BotError.Unknown::class.java, it)
         }
@@ -285,7 +245,7 @@ class EventMapperTest {
             conversationId = TEST_CONVERSATION_ID,
             text = TextContent("/remind   to   \"task\"   “tomorrow at 10:00”   ")
         )
-        val event = EventMapper.fromEvent(messageEventDTO)
+        val event = eventMapper.fromEvent(messageEventDTO)
         event.shouldSucceed {
             assertInstanceOf(Command.NewReminder::class.java, it)
             val reminder = (it as Command.NewReminder).reminder

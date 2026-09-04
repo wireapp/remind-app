@@ -17,6 +17,7 @@ import org.quartz.SimpleScheduleBuilder
 import org.quartz.Trigger
 import org.quartz.TriggerBuilder
 import java.util.Date
+import java.util.TimeZone
 
 @ApplicationScoped
 class DefaultReminderJobRepository(
@@ -68,8 +69,11 @@ class DefaultReminderJobRepository(
                         "myRecurringTriggerFor_${reminder.taskId}",
                         reminder.conversationId.toRawString()
                     ).startNow()
-                    .withSchedule(CronScheduleBuilder.cronSchedule(reminder.scheduledCron))
-                    .build()
+                    .withSchedule(
+                        CronScheduleBuilder
+                            .cronSchedule(reminder.scheduledCron)
+                            .inTimeZone(TimeZone.getTimeZone(reminder.zoneId))
+                    ).build()
             }
         }
 

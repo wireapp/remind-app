@@ -33,7 +33,8 @@ import java.util.UUID
 @Startup
 class MlsSdkClient(
     private val eventProcessor: EventProcessor,
-    private val usageMetrics: UsageMetrics
+    private val usageMetrics: UsageMetrics,
+    private val eventMapper: EventMapper
 ) {
     private val logger = LoggerFactory.getLogger(this::class.java)
     private lateinit var manager: WireApplicationManager
@@ -57,7 +58,7 @@ class MlsSdkClient(
                 apiToken = apiToken,
                 apiHost = apiHost,
                 cryptographyStorageKey = cryptographyStoragePassword.toByteArray(),
-                wireEventsHandler = ReminderEventHandler(eventProcessor, usageMetrics)
+                wireEventsHandler = ReminderEventHandler(eventProcessor, usageMetrics, eventMapper)
             )
 
         logger.info("Starting Wire Apps SDK...")

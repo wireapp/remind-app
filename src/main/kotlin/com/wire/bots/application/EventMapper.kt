@@ -6,10 +6,17 @@ import arrow.core.raise.either
 import arrow.core.right
 import com.wire.bots.domain.event.BotError
 import com.wire.bots.domain.event.Command
+import com.wire.bots.domain.reminder.ConversationSettingsRepository
+import com.wire.bots.domain.reminder.SupportedTimezones
 import com.wire.sdk.model.QualifiedId
+import jakarta.enterprise.context.ApplicationScoped
+import java.time.ZoneId
 import java.util.UUID
 
-object EventMapper {
+@ApplicationScoped
+class EventMapper(
+    private val conversationSettingsRepository: ConversationSettingsRepository
+) {
     /**
      * Maps the [MessageEventDTO] to a [Command] object so it can be processed by the application.
      */
@@ -74,9 +81,7 @@ object EventMapper {
             if (words[0] == "/remind") {
                 return parseCommandArgs(
                     conversationId = conversationId,
-                    args = rawCommand.substringAfter("/remind").trimStart(),
-                    referencedMessageId = referencedMessageId,
-                    senderId = senderId
+                    args = rawCommand.substringAfter("/remind").trimStart()
                 )
             }
             return BotError.Skip.left()
@@ -84,17 +89,14 @@ object EventMapper {
 
     private fun parseCommandArgs(
         conversationId: QualifiedId,
-        args: String,
-        referencedMessageId: String? = null,
-        senderId: QualifiedId? = null
+        args: String
     ): Either<BotError, Command> =
         when {
             args.trim() == "help" -> Command.Help(conversationId).right()
             args.trim() == "list" -> Command.ListReminders(conversationId).right()
+            args.trim() == "show timezone" -> Command.ShowTimezone(conversationId).right()
+            args.startsWith("set timezone") -> parseSetTimezoneCommand(conversationId, args)
             args.startsWith("to") -> parseToCommand(conversationId, args)
-            args.startsWith(
-                "delete"
-            ) -> parseDeleteCommand(conversationId, args, referencedMessageId, senderId)
             else ->
                 BotError
                     .Unknown(
@@ -102,6 +104,19 @@ object EventMapper {
                         reason = COMMAND_HINT
                     ).left()
         }
+
+    private fun parseSetTimezoneCommand(
+        conversationId: QualifiedId,
+        args: String
+    ): Either<BotError, Command> {
+        val label = args.substringAfter("set timezone").trim().uppercase()
+        val zoneId = SupportedTimezones.resolve(label)
+        return if (zoneId != null) {
+            Command.SetTimezone(conversationId, zoneId, label).right()
+        } else {
+            BotError.ReminderError(conversationId, BotError.ErrorType.INVALID_TIMEZONE).left()
+        }
+    }
 
     private fun parseToCommand(
         conversationId: QualifiedId,
@@ -134,39 +149,17 @@ object EventMapper {
             else -> {
                 val task = matches[0]
                 val schedule = matches[1]
+                val zoneId = conversationSettingsRepository.getTimezone(conversationId)
                 ReminderMapper
                     .parseReminder(
                         conversationId = conversationId,
                         task = task,
-                        schedule = schedule
+                        schedule = schedule,
+                        zoneId = zoneId
                     ).mapLeft { error ->
                         error as? BotError.ReminderError ?: error("❌ Unexpected error type: $error")
                     }
             }
-        }
-    }
-
-    private fun parseDeleteCommand(
-        conversationId: QualifiedId,
-        args: String,
-        referencedMessageId: String? = null,
-        senderId: QualifiedId? = null
-    ): Either<BotError, Command> {
-        val reminderId = args.substringAfter("delete").trim()
-        return if (reminderId.isBlank()) {
-            BotError
-                .ReminderError(
-                    conversationId = conversationId,
-                    errorType = BotError.ErrorType.INVALID_REMINDER_ID
-                ).left()
-        } else {
-            Command
-                .DeleteReminder(
-                    conversationId = conversationId,
-                    reminderId = reminderId,
-                    referencedMessageId = referencedMessageId,
-                    senderId = senderId
-                ).right()
         }
     }
 }
@@ -175,10 +168,8 @@ internal val COMMAND_EXPRESSION: Regex = "\\s+".toRegex()
 internal val COMMAND_HINT =
     """
     Unknown command, valid options are:
-    ```
-    /remind help
-    /remind list
-    /remind to "what" "when"
-    /remind delete <reminderId>
-    ```
+/remind help
+/remind list
+/remind set timezone <zone>
+/remind show timezone
     """.trimIndent()

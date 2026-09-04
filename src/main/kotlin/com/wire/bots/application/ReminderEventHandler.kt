@@ -14,7 +14,8 @@ import org.slf4j.LoggerFactory
 
 class ReminderEventHandler(
     private val eventProcessor: EventProcessor,
-    private val usageMetrics: UsageMetrics
+    private val usageMetrics: UsageMetrics,
+    private val eventMapper: EventMapper
 ) : WireEventsHandlerSuspending() {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -31,7 +32,6 @@ class ReminderEventHandler(
             )
         )
 
-        // Sending a Read Receipt for the received message
         val receipt = WireMessage.Receipt.create(
             conversationId = wireMessage.conversationId,
             type = WireMessage.Receipt.Type.READ,
@@ -58,16 +58,16 @@ class ReminderEventHandler(
     override suspend fun onLocationMessageReceived(locationMessage: WireMessage.Location) {
         logger.info(
             "Received onLocationSuspending Message : ${locationMessage.id} " +
-                "in conversation ${locationMessage.conversationId}"
+                    "in conversation ${locationMessage.conversationId}"
         )
 
         val message = WireMessage.Text.create(
             conversationId = locationMessage.conversationId,
             text = "Received Location\n\n" +
-                "Latitude: ${locationMessage.latitude}\n\n" +
-                "Longitude: ${locationMessage.longitude}\n\n" +
-                "Name: ${locationMessage.name}\n\n" +
-                "Zoom: ${locationMessage.zoom}"
+                    "Latitude: ${locationMessage.latitude}\n\n" +
+                    "Longitude: ${locationMessage.longitude}\n\n" +
+                    "Name: ${locationMessage.name}\n\n" +
+                    "Zoom: ${locationMessage.zoom}"
         )
 
         manager.sendMessageSuspending(message = message)
@@ -87,13 +87,10 @@ class ReminderEventHandler(
         manager.sendMessageSuspending(welcomeMessage)
     }
 
-    /**
-     * Process an event using the reminder bot logic
-     */
     private fun processEvent(eventDTO: EventDTO) {
         try {
             logger.debug("Processing event: $eventDTO")
-            val result: Either<BotError, Command> = EventMapper.fromEvent(eventDTO)
+            val result: Either<BotError, Command> = eventMapper.fromEvent(eventDTO)
             result.fold(
                 ifLeft = { error ->
                     logger.warn("Processing event with error: $error")
