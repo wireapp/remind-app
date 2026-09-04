@@ -85,7 +85,7 @@ class CommandHandler(
             .flatMap {
                 outgoingMessageRepository.sendMessage(
                     conversationId = command.conversationId,
-                    messageContent = "🌍 Remind App Timezone for this conversation set to `${command.label}`."
+                    messageContent = "🌍 Timezone for this conversation set to `${command.label}`."
                 )
             }
 
@@ -93,7 +93,7 @@ class CommandHandler(
         val current = conversationSettingsRepository.getTimezone(command.conversationId)
         return outgoingMessageRepository.sendMessage(
             conversationId = command.conversationId,
-            messageContent = " 🌍 Remind App timezone for this conversation is currently set to `${current.id}`."
+            messageContent = "🌍 Remind App timezone for this conversation is currently set to `${current.id}`."
         )
     }
 
@@ -241,13 +241,14 @@ object BuildMsg {
                 "```\n" +
                 "/remind list\n" +
                 "```\n" +
-                "Each reminder has a Delete button you can use to remove it.\n" +
-                "4. All reminders use this conversation's timezone, which defaults to CET until someone sets it:\n" +
+                "4. Each reminder has a Delete button you can use to remove it. A conversation can have " +
+                "at most $MAX_REMINDER_JOBS active reminders at a time.\n" +
+                "5. All reminders use this conversation's timezone, which defaults to CET until someone sets it:\n" +
                 "```\n" +
                 "/remind set timezone <zone>\n" +
                 "```\n" +
                 "Supported values: ${SupportedTimezones.helpBlock()}\n" +
-                "5. You can check which timezone this conversation is currently using with:\n" +
+                "6. You can check which timezone this conversation is currently using with:\n" +
                 "```\n" +
                 "/remind show timezone\n" +
                 "```"
