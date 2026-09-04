@@ -18,7 +18,7 @@ class ReminderTaskExecutor(
         outgoingMessageRepository
             .sendMessage(
                 conversationId = reminder.conversationId,
-                messageContent = reminder.task
+                messageContent = "⏰ **Reminder:** ${reminder.task}"
             ).flatMap {
                 either {
                     if (!reminder.isEternal) {
