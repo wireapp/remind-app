@@ -28,6 +28,11 @@ class UsageMetrics(
         .description("Number of Delete command received")
         .register(registry)
 
+    private val setTimezoneCommandCounter: Counter = Counter
+        .builder("remindapp_set_timezone_commands_total")
+        .description("Number of SetTimezone command received")
+        .register(registry)
+
     private val appAddedToConversationCounter: Counter = Counter
         .builder("remindapp_added_to_conversation_total")
         .description("Number of times the app is added to a conversation")
@@ -47,6 +52,10 @@ class UsageMetrics(
 
     fun onDeleteCommand() {
         deleteCommandCounter.increment()
+    }
+
+    fun onSetTimezoneCommand() {
+        setTimezoneCommandCounter.increment()
     }
 
     fun onAppAddedToConversation() {

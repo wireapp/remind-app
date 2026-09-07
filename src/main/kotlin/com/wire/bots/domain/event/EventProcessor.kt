@@ -34,11 +34,15 @@ class EventProcessor(
             }
 
     private fun getErrorMessage(error: Throwable): String =
-        if (error is SaveReminderSchedule.MaxReminderJobsReached) {
-            "❌ Maximum numbers of active reminders reached (currently ${error.max})." +
-                "Please delete some reminders first."
-        } else {
-            "❌ An error occurred while processing the command, please try again later."
+        when (error) {
+            is SaveReminderSchedule.MaxReminderJobsReached ->
+                "❌ Maximum numbers of active reminders reached (currently ${error.max})." +
+                    "Please delete some reminders first."
+            // Reminders are only parsed once the requester's timezone is known, so parsing
+            // errors reach us while handling the command instead of while mapping the event.
+            is BotError.ReminderError -> error.errorType.message
+            is BotError.InvalidTimezone -> error.reason
+            else -> "❌ An error occurred while processing the command, please try again later."
         }
 
     fun process(error: BotError): Either<Throwable, Unit> =
@@ -46,6 +50,7 @@ class EventProcessor(
             is BotError.Unknown -> handleErrorMessage(error)
             is BotError.Skip -> logger.warn("Event skipped, not necessary to handle").right()
             is BotError.ReminderError -> handleErrorMessage(error)
+            is BotError.InvalidTimezone -> handleErrorMessage(error)
         }.mapLeft { unhandled ->
             logger.error(
                 "Fatal! Error while processing error, closing the door from outside",

@@ -25,7 +25,7 @@ class ReminderEventHandler(
         processEvent(
             MessageEventDTO(
                 type = EventTypeDTO.NEW_TEXT,
-                userId = wireMessage.sender.id.toString(),
+                senderId = wireMessage.sender,
                 conversationId = wireMessage.conversationId,
                 text = TextContent(wireMessage.text)
             )
@@ -47,7 +47,7 @@ class ReminderEventHandler(
         processEvent(
             ButtonActionEventDTO(
                 type = EventTypeDTO.BUTTON_ACTION,
-                userId = buttonAction.sender.id.toString(),
+                senderId = buttonAction.sender,
                 conversationId = buttonAction.conversationId,
                 buttonId = buttonAction.buttonId,
                 referencedMessageId = buttonAction.referencedMessageId

@@ -7,6 +7,7 @@ import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Table
 import java.time.Instant
+import java.time.ZoneId
 
 @Entity
 @Table(name = "REMINDERS")
@@ -16,6 +17,7 @@ data class ReminderEntity(
     @Column(name = "conversation_id") val conversationId: QualifiedId,
     @Column(name = "task_id") val taskId: String,
     @Column(name = "task") val task: String,
+    @Column(name = "zone_id") val zoneId: ZoneId,
     @Column(name = "scheduled_at") val scheduledAt: Instant? = null,
     @Column(name = "scheduled_cron") val scheduledCron: String? = null,
     @Column(name = "is_eternal") val isEternal: Boolean = false

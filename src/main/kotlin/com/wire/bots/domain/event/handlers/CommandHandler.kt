@@ -7,11 +7,10 @@ import com.wire.bots.domain.event.Command
 import com.wire.bots.domain.message.OutgoingMessageRepository
 import com.wire.bots.domain.reminder.Reminder
 import com.wire.bots.domain.reminder.ReminderNextSchedule
-import com.wire.bots.domain.reminder.getNextSchedules
+import com.wire.bots.domain.usecase.CreateReminder
 import com.wire.bots.domain.usecase.DeleteReminderUseCase
 import com.wire.bots.domain.usecase.ListRemindersInConversation
-import com.wire.bots.domain.usecase.SaveReminderSchedule
-import com.wire.bots.domain.usecase.SaveReminderSchedule.Companion.MAX_REMINDER_JOBS
+import com.wire.bots.domain.user.Timezones
 import com.wire.bots.infrastructure.utils.CronInterpreter
 import com.wire.bots.infrastructure.utils.UsageMetrics
 import com.wire.sdk.model.WireMessage
@@ -26,7 +25,8 @@ import java.util.UUID
 @DomainComponent
 class CommandHandler(
     private val outgoingMessageRepository: OutgoingMessageRepository,
-    private val saveReminderSchedule: SaveReminderSchedule,
+    private val timezoneCommandHandler: TimezoneCommandHandler,
+    private val createReminder: CreateReminder,
     private val listRemindersInConversation: ListRemindersInConversation,
     private val deleteReminder: DeleteReminderUseCase,
     private val usageMetrics: UsageMetrics
@@ -62,6 +62,11 @@ class CommandHandler(
                 usageMetrics.onDeleteCommand()
                 deleteReminder(event)
             }
+
+            is Command.SetTimezone -> {
+                usageMetrics.onSetTimezoneCommand()
+                timezoneCommandHandler.setTimezone(event)
+            }
         }
 
         logger.info(
@@ -83,29 +88,42 @@ class CommandHandler(
             )
         }
 
+    /**
+     * Creates the reminder, unless it needs a timezone we don't have yet: in that case nothing is
+     * scheduled and the user is asked for their timezone first.
+     */
     private fun handleNewReminder(command: Command.NewReminder): Either<Throwable, Unit> =
-        // First, create the confirmation message. This can fail if the cron is invalid.
-        BuildMsg
-            .createReminderCreationConfirmationMessage(
-                ReminderNextSchedule(
-                    command.reminder,
-                    command.reminder.getNextSchedules(MAX_REMINDER_JOBS)
-                )
-            ).flatMap { message ->
-                // Only if the message is created successfully, save the reminder.
-                saveReminderSchedule(command.reminder).flatMap {
-                    outgoingMessageRepository.sendCompositeMessage(
+        createReminder(command).flatMap { result ->
+            when (result) {
+                is CreateReminder.Result.TimezoneMissing ->
+                    timezoneCommandHandler.requestTimezone(
                         conversationId = command.conversationId,
-                        messageContent = message,
-                        buttonList = createButton(text = "Delete", id = command.reminder.taskId)
+                        requesterId = command.requesterId
                     )
-                }
+
+                is CreateReminder.Result.Created ->
+                    sendReminderCreatedMessage(command, result.schedule)
+            }
+        }
+
+    private fun sendReminderCreatedMessage(
+        command: Command.NewReminder,
+        schedule: ReminderNextSchedule
+    ): Either<Throwable, Unit> =
+        BuildMsg
+            .createReminderCreationConfirmationMessage(schedule)
+            .flatMap { message ->
+                outgoingMessageRepository.sendCompositeMessage(
+                    conversationId = command.conversationId,
+                    messageContent = message,
+                    buttonList = createButton(text = "Delete", id = schedule.reminder.taskId)
+                )
             }
 
     // TODO: add function to retrive single reminder by id
 
     private fun deleteReminder(command: Command.DeleteReminder): Either<Throwable, Unit> {
-        val isButtonAction = command.referencedMessageId != null && command.senderId != null
+        val isButtonAction = command.referencedMessageId != null
 
         val confirmationSent = if (isButtonAction) {
             sendButtonActionConfirmationMessage(command)
@@ -188,7 +206,7 @@ class CommandHandler(
         outgoingMessageRepository.sendButtonActionConfirmation(
             conversationId = command.conversationId,
             referencedMessageId = command.referencedMessageId!!,
-            sender = command.senderId!!,
+            sender = command.senderId,
             buttonId = command.reminderId
         )
 
@@ -227,7 +245,41 @@ object BuildMsg {
             ```
             4. Each reminder in the `/remind list` response has a Delete button,
             use it to remove that reminder.
+            5. The times you give me are read in your own timezone.
+            Set it once, in our 1:1 chat, with:
+            ```
+            /remind set-timezone "Europe/Berlin"
+            ```
         """.trimIndent()
+
+    val timezoneRequestMessage =
+        """
+            🌍 I don't know your timezone yet, so I can't schedule that reminder correctly.
+
+            Tell me your timezone with:
+            ```
+            /remind set-timezone "Europe/Berlin"
+            ```
+            Use the timezone name for your city, like `Europe/Istanbul` or `Asia/Tokyo`.
+
+            Once it's set, please send your reminder command again.
+        """.trimIndent()
+
+    val timezoneRequestNotice =
+        """
+            🌍 I couldn't set that reminder because I don't know your timezone yet.
+            I've sent you a direct message — set it there, then send this command again.
+        """.trimIndent()
+
+    val setTimezoneInPrivateMessage =
+        """
+            🌍 Your timezone is a personal setting, so let's keep it out of this conversation.
+            Send me `/remind set-timezone "Europe/Berlin"` in our 1:1 chat instead.
+        """.trimIndent()
+
+    fun timezoneSavedMessage(zoneId: ZoneId): String =
+        "✅ Timezone set to `$zoneId` (currently ${Timezones.currentOffsetOf(zoneId)}).\n" +
+            "From now on I read the times you give me in this timezone."
 
     fun createReminderCreationConfirmationMessage(
         reminderNextSchedule: ReminderNextSchedule
@@ -243,7 +295,7 @@ object BuildMsg {
                         "\nThe next ${reminderNextSchedule.nextSchedules.size} " +
                         "schedules for the reminder is:\n" +
                         reminderNextSchedule.nextSchedules.joinToString("\n") {
-                            "- ${formatSchedule(it)}"
+                            "- ${formatSchedule(it, reminder.zoneId)}"
                         }
                 }
             }
@@ -257,22 +309,29 @@ object BuildMsg {
 
     private fun scheduleText(reminder: Reminder): String =
         when (reminder) {
-            is Reminder.SingleReminder -> formatSchedule(reminder.scheduledAt)
-            is Reminder.RecurringReminder -> CronInterpreter.cronToText(reminder.scheduledCron)
+            is Reminder.SingleReminder ->
+                formatSchedule(reminder.scheduledAt, reminder.zoneId)
+
+            is Reminder.RecurringReminder ->
+                "${CronInterpreter.cronToText(reminder.scheduledCron)} (${reminder.zoneId})"
         }
 
     /**
-     * Reminders are parsed (jchronic) and fired (Quartz) in the JVM default zone, so schedules
-     * are rendered in that same zone. The zone is shown to keep the value unambiguous.
+     * Reminders are parsed and fired in the timezone their creator picked, so schedules are
+     * rendered in that same zone. The zone is shown to keep the value unambiguous.
      */
     private val dateFormatter: DateTimeFormatter =
-        DateTimeFormatter
-            .ofPattern("EEE d MMM yyyy 'at' HH:mm z", Locale.ENGLISH)
-            .withZone(ZoneId.systemDefault())
+        DateTimeFormatter.ofPattern("EEE d MMM yyyy 'at' HH:mm z", Locale.ENGLISH)
 
-    private fun formatSchedule(instant: Instant): String = dateFormatter.format(instant)
+    private fun formatSchedule(
+        instant: Instant,
+        zoneId: ZoneId
+    ): String = dateFormatter.withZone(zoneId).format(instant)
 
-    private fun formatSchedule(date: Date): String = dateFormatter.format(date.toInstant())
+    private fun formatSchedule(
+        date: Date,
+        zoneId: ZoneId
+    ): String = formatSchedule(date.toInstant(), zoneId)
 
     val welcomeText =
         "👋 Hi, I'm the Remind App. Thanks for adding me to the conversation.\n" +
