@@ -307,21 +307,28 @@ object BuildMsg {
     fun createDeletedMessage(reminder: Reminder): String =
         "🗑️ Reminder deleted · “${reminder.task}” · ${scheduleText(reminder)}"
 
-    private fun scheduleText(reminder: Reminder): String =
-        when (reminder) {
-            is Reminder.SingleReminder ->
-                formatSchedule(reminder.scheduledAt, reminder.zoneId)
-
-            is Reminder.RecurringReminder ->
-                "${CronInterpreter.cronToText(reminder.scheduledCron)} (${reminder.zoneId})"
+    /**
+     * A schedule always carries the timezone it was created in, named the same way the user
+     * named it, so a one-off and a recurring reminder read alike:
+     *
+     * - `Wed 9 Sep 2026 at 10:00 (Europe/Berlin)`
+     * - `every day at 10:00 (Europe/Berlin)`
+     */
+    private fun scheduleText(reminder: Reminder): String {
+        val schedule = when (reminder) {
+            is Reminder.SingleReminder -> formatSchedule(reminder.scheduledAt, reminder.zoneId)
+            is Reminder.RecurringReminder -> CronInterpreter.cronToText(reminder.scheduledCron)
         }
+        return "$schedule (${reminder.zoneId})"
+    }
 
     /**
      * Reminders are parsed and fired in the timezone their creator picked, so schedules are
-     * rendered in that same zone. The zone is shown to keep the value unambiguous.
+     * rendered in that same zone. The zone itself is added by the caller, which knows whether
+     * it was already named nearby.
      */
     private val dateFormatter: DateTimeFormatter =
-        DateTimeFormatter.ofPattern("EEE d MMM yyyy 'at' HH:mm z", Locale.ENGLISH)
+        DateTimeFormatter.ofPattern("EEE d MMM yyyy 'at' HH:mm", Locale.ENGLISH)
 
     private fun formatSchedule(
         instant: Instant,

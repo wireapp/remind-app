@@ -17,6 +17,7 @@ import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.slot
 import io.mockk.verify
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.DisplayName
@@ -55,7 +56,7 @@ class CommandHandlerTest {
         )
         either.fold({ fail("expected Right but got Left: $it") }) { msg ->
             assertTrue(msg.contains("Pay rent"))
-            assertTrue(msg.contains("15 Jun 2030 at 18:00"), msg)
+            assertTrue(msg.contains("15 Jun 2030 at 18:00 (Europe/Berlin)"), msg)
         }
     }
 
@@ -79,9 +80,11 @@ class CommandHandlerTest {
         )
         either.fold({ fail("expected Right but got Left: $it") }) { msg ->
             assertTrue(msg.contains("Daily meeting"))
-            // The zone the reminder was created in is part of the answer.
-            assertTrue(msg.contains("Europe/Berlin"), msg)
-            assertTrue(msg.contains("at 10:00"), msg)
+            // The zone the reminder was created in is named once, next to the schedule.
+            assertTrue(msg.contains("every day at 10:00 (Europe/Berlin)"), msg)
+            // ...and not repeated on each of the upcoming occurrences listed below it.
+            assertEquals(3, msg.lines().count { line -> line.startsWith("- ") }, msg)
+            assertEquals(1, msg.split("Europe/Berlin").size - 1, msg)
         }
     }
 
