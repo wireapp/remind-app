@@ -55,25 +55,6 @@ class ReminderEventHandler(
         )
     }
 
-    // TODO :: Delete this handler.
-    override suspend fun onLocationMessageReceived(locationMessage: WireMessage.Location) {
-        logger.info(
-            "Received onLocationSuspending Message : ${locationMessage.id} " +
-                "in conversation ${locationMessage.conversationId}"
-        )
-
-        val message = WireMessage.Text.create(
-            conversationId = locationMessage.conversationId,
-            text = "Received Location\n\n" +
-                "Latitude: ${locationMessage.latitude}\n\n" +
-                "Longitude: ${locationMessage.longitude}\n\n" +
-                "Name: ${locationMessage.name}\n\n" +
-                "Zoom: ${locationMessage.zoom}"
-        )
-
-        manager.sendMessageSuspending(message = message)
-    }
-
     override suspend fun onAppAddedToConversation(
         conversation: Conversation,
         members: List<ConversationMember>
