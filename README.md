@@ -43,9 +43,6 @@ command again once your timezone is set.
 > [!NOTE]
 > A reminder keeps the timezone it was created with. Changing your timezone later affects new
 > reminders only, so existing ones never shift for the rest of the conversation.
->
-> Purely relative schedules such as `"in 10 minutes"` point at the same moment everywhere, so
-> they work even before you set a timezone.
 
 ### `"When"` syntax or setting the time for the reminder:
 

@@ -11,12 +11,6 @@ import java.time.format.DateTimeFormatter
  * against a zone we cannot resolve.
  */
 object Timezones {
-    /**
-     * Zone used for schedules that do not depend on a wall clock, and the zone every reminder
-     * created before timezone support was added is interpreted in.
-     */
-    val DEFAULT: ZoneId = ZoneId.of("UTC")
-
     private val OFFSET: DateTimeFormatter = DateTimeFormatter.ofPattern("ZZZZ")
 
     private val byLowercaseId: Map<String, ZoneId> =

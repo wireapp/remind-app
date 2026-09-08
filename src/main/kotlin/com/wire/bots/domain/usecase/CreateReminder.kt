@@ -10,16 +10,15 @@ import com.wire.bots.domain.reminder.ReminderNextSchedule
 import com.wire.bots.domain.reminder.ReminderParser
 import com.wire.bots.domain.reminder.getNextSchedules
 import com.wire.bots.domain.usecase.SaveReminderSchedule.Companion.MAX_REMINDER_JOBS
-import com.wire.bots.domain.user.Timezones
 import com.wire.bots.domain.user.UserTimezoneRepository
 import java.time.ZoneId
 
 /**
  * Creates the reminder described by a `/remind to` command.
  *
- * A schedule that names a wall clock ("tomorrow at 18:00", "every day at 10:00") only makes
- * sense in a timezone, so it needs the requester's preference. When that preference is missing
- * nothing is created and [Result.TimezoneMissing] is returned, so the caller can ask for it.
+ * Every reminder is scheduled and shown in the requester's timezone, so it needs their
+ * preference. When that preference is missing nothing is created and [Result.TimezoneMissing]
+ * is returned, so the caller can ask for it.
  */
 @DomainComponent
 class CreateReminder(
@@ -35,19 +34,12 @@ class CreateReminder(
     }
 
     operator fun invoke(command: Command.NewReminder): Either<Throwable, Result> =
-        resolveZoneId(command).flatMap { zoneId ->
+        userTimezoneRepository.findByUserId(command.requesterId).flatMap { zoneId ->
             if (zoneId == null) {
                 Result.TimezoneMissing.right()
             } else {
                 scheduleReminder(command, zoneId).map { Result.Created(it) }
             }
-        }
-
-    private fun resolveZoneId(command: Command.NewReminder): Either<Throwable, ZoneId?> =
-        if (dependsOnTimezone(command.schedule)) {
-            userTimezoneRepository.findByUserId(command.requesterId)
-        } else {
-            Timezones.DEFAULT.right()
         }
 
     private fun scheduleReminder(
@@ -69,13 +61,3 @@ class CreateReminder(
         }
     }
 }
-
-/**
- * A schedule that is only an offset from now ("in 10 minutes", "in one week") points at the same
- * instant in every timezone, so it needs no preference. Anything else names a wall clock and does.
- */
-private val RELATIVE_OFFSET =
-    Regex("""in\s+\S+\s+(second|minute|hour|day|week|month|year)s?""")
-
-private fun dependsOnTimezone(schedule: String): Boolean =
-    !RELATIVE_OFFSET.matches(schedule.trim().lowercase())

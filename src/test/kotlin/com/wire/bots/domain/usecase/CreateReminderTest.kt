@@ -13,7 +13,9 @@ import io.mockk.slot
 import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.time.Instant
 import java.time.ZoneId
 import java.util.Date
 import java.util.UUID
@@ -49,8 +51,22 @@ class CreateReminderTest {
     }
 
     @Test
-    fun `given a purely relative schedule, then no timezone preference is needed`() {
+    fun `given a relative schedule and no stored timezone, then nothing is created`() {
         val fixture = Fixture()
+        every { fixture.timezones.findByUserId(REQUESTER_ID) } returns Either.Right(null)
+
+        val result = fixture.createReminder(command(schedule = "in 10 minutes"))
+
+        result.shouldSucceed {
+            assertInstanceOf(CreateReminder.Result.TimezoneMissing::class.java, it)
+        }
+        verify(exactly = 0) { fixture.saveReminderSchedule.invoke(any()) }
+    }
+
+    @Test
+    fun `given a relative schedule, then it is still shown in the stored timezone`() {
+        val fixture = Fixture()
+        every { fixture.timezones.findByUserId(REQUESTER_ID) } returns Either.Right(BERLIN)
         val saved = fixture.expectSave()
 
         val result = fixture.createReminder(command(schedule = "in 10 minutes"))
@@ -58,8 +74,13 @@ class CreateReminderTest {
         result.shouldSucceed {
             assertInstanceOf(CreateReminder.Result.Created::class.java, it)
         }
-        assertEquals(ZoneId.of("UTC"), saved.captured.zoneId)
-        verify(exactly = 0) { fixture.timezones.findByUserId(any()) }
+        // The instant is timezone independent, but the zone it is rendered in is not.
+        val reminder = saved.captured as Reminder.SingleReminder
+        assertEquals(BERLIN, reminder.zoneId)
+        assertTrue(
+            reminder.scheduledAt.isAfter(Instant.now().plusSeconds(9 * SECONDS_PER_MINUTE)),
+            "expected roughly ten minutes out, was ${reminder.scheduledAt}"
+        )
     }
 
     @Test
@@ -101,5 +122,6 @@ class CreateReminderTest {
         val CONVERSATION_ID = QualifiedId(UUID.randomUUID(), "example.com")
         val REQUESTER_ID = QualifiedId(UUID.randomUUID(), "example.com")
         val BERLIN: ZoneId = ZoneId.of("Europe/Berlin")
+        const val SECONDS_PER_MINUTE = 60L
     }
 }

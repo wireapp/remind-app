@@ -10,7 +10,7 @@ class TimezonesTest {
     fun `given a known timezone name, then it is accepted`() {
         assertEquals(ZoneId.of("Europe/Berlin"), Timezones.parse("Europe/Berlin"))
         assertEquals(ZoneId.of("Europe/Istanbul"), Timezones.parse("Europe/Istanbul"))
-        assertEquals(Timezones.DEFAULT, Timezones.parse("UTC"))
+        assertEquals(ZoneId.of("UTC"), Timezones.parse("UTC"))
     }
 
     @Test
@@ -29,6 +29,6 @@ class TimezonesTest {
     @Test
     fun `given a timezone, then its current offset is readable`() {
         assertEquals("GMT+05:30", Timezones.currentOffsetOf(ZoneId.of("Asia/Kolkata")))
-        assertEquals("GMT", Timezones.currentOffsetOf(Timezones.DEFAULT))
+        assertEquals("GMT", Timezones.currentOffsetOf(ZoneId.of("UTC")))
     }
 }
