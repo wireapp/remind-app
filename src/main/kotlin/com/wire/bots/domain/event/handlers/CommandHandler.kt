@@ -260,7 +260,7 @@ object BuildMsg {
             ```
             /remind set-timezone "Europe/Berlin"
             ```
-            Use the timezone name for your city, like `Europe/Istanbul` or `Asia/Tokyo`.
+            Use the timezone name for your city, like `Europe/Berlin` or `America/Detroit`.
 
             Once it's set, please send your reminder command again.
         """.trimIndent()

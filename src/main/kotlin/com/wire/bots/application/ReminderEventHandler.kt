@@ -55,6 +55,7 @@ class ReminderEventHandler(
         )
     }
 
+    // TODO :: Delete this handler.
     override suspend fun onLocationMessageReceived(locationMessage: WireMessage.Location) {
         logger.info(
             "Received onLocationSuspending Message : ${locationMessage.id} " +
