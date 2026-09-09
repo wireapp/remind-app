@@ -14,8 +14,8 @@ sealed interface Reminder {
     val task: String
 
     /**
-     * The timezone the schedule was created in. Recurring reminders fire against this zone's
-     * wall clock, and every schedule is rendered in it.
+     * The timezone the schedule was created in. Recurring reminders fire against the local
+     * time in this zone, and every schedule is rendered in it.
      *
      * It is frozen at creation time, so an existing reminder never shifts when its creator
      * later changes their timezone preference.

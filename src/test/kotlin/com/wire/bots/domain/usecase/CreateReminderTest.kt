@@ -22,7 +22,7 @@ import java.util.UUID
 
 class CreateReminderTest {
     @Test
-    fun `given a wall clock schedule and no stored timezone, then nothing is created`() {
+    fun `given a schedule with a specific time and no stored timezone, then nothing is created`() {
         val fixture = Fixture()
         every { fixture.timezones.findByUserId(REQUESTER_ID) } returns Either.Right(null)
 
@@ -35,7 +35,7 @@ class CreateReminderTest {
     }
 
     @Test
-    fun `given a wall clock schedule and a stored timezone, then it is read in that timezone`() {
+    fun `given a schedule with a specific time, then it is read in the stored timezone`() {
         val fixture = Fixture()
         every { fixture.timezones.findByUserId(REQUESTER_ID) } returns Either.Right(BERLIN)
         val saved = fixture.expectSave()

@@ -19,7 +19,7 @@ import java.util.UUID
 
 /**
  * Turns the "what" and "when" of a `/remind to` command into a [Reminder], reading the schedule
- * as a wall clock in the requester's timezone.
+ * as a local date and time in the requester's timezone.
  */
 object ReminderParser {
     private val INVALID_TIME_TOKENS = listOf("hour", "minute", "second")
@@ -55,7 +55,7 @@ object ReminderParser {
         zoneId: ZoneId
     ): Either<BotError, Reminder> =
         runCatching {
-            val scheduledAt = parseWallClock(schedule, zoneId)
+            val scheduledAt = parseScheduledAt(schedule, zoneId)
             ValidateReminder
                 .validateScheduledTimeInFuture(scheduledAt, conversationId)
                 ?.let { return it.left() }
@@ -89,12 +89,12 @@ object ReminderParser {
         }.getOrElse { parseError(conversationId) }
 
     /**
-     * jchronic is timezone-naive: it reads only the wall clock fields of the reference date and
-     * builds its answer with `Calendar.getInstance()`, so it always works in the JVM default
-     * zone. We therefore hand it the requester's local wall clock, and read its answer back as a
-     * wall clock that we anchor in the requester's zone ourselves.
+     * jchronic has no concept of timezones: it reads only the date and time fields of the
+     * reference value and builds its answer with `Calendar.getInstance()`, so it always works in
+     * the JVM default zone. We therefore give it the requester's local date and time, read the
+     * answer back as a [LocalDateTime], and zone it ourselves to get the actual instant.
      */
-    private fun parseWallClock(
+    private fun parseScheduledAt(
         schedule: String,
         zoneId: ZoneId
     ): Instant {

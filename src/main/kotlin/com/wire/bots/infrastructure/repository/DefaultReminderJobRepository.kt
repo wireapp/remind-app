@@ -70,7 +70,7 @@ class DefaultReminderJobRepository(
                         reminder.conversationId.toRawString()
                     ).startNow()
                     .withSchedule(
-                        // The cron is a wall clock in the creator's timezone, not in the
+                        // The cron is a local time in the creator's timezone, not in the
                         // timezone the app happens to run in.
                         CronScheduleBuilder
                             .cronSchedule(reminder.scheduledCron)
