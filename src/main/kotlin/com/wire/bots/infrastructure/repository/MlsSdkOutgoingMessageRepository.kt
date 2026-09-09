@@ -28,6 +28,27 @@ class MlsSdkOutgoingMessageRepository(
             )
         }
 
+    override fun sendMessageToOneToOne(
+        userId: QualifiedId,
+        messageContent: String
+    ): Either<Throwable, QualifiedId> =
+        Either.catch {
+            val manager = conversationRemoteApi.getManager()
+            val conversationId = manager.createOneToOneConversation(userId)
+            manager.sendMessage(
+                message = WireMessage.Text.create(
+                    conversationId = conversationId,
+                    text = messageContent
+                )
+            )
+            conversationId
+        }
+
+    override fun findOneToOneConversation(userId: QualifiedId): Either<Throwable, QualifiedId?> =
+        Either.catch {
+            conversationRemoteApi.getManager().getOneToOneConversationByUserId(userId)?.id
+        }
+
     override fun sendCompositeMessage(
         conversationId: QualifiedId,
         messageContent: String,

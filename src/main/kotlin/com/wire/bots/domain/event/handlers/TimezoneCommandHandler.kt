@@ -3,7 +3,6 @@ package com.wire.bots.domain.event.handlers
 import arrow.core.Either
 import arrow.core.flatMap
 import com.wire.bots.domain.DomainComponent
-import com.wire.bots.domain.conversation.ConversationRepository
 import com.wire.bots.domain.event.Command
 import com.wire.bots.domain.message.OutgoingMessageRepository
 import com.wire.bots.domain.user.UserTimezoneRepository
@@ -17,7 +16,6 @@ import org.slf4j.LoggerFactory
 @DomainComponent
 class TimezoneCommandHandler(
     private val outgoingMessageRepository: OutgoingMessageRepository,
-    private val conversationRepository: ConversationRepository,
     private val userTimezoneRepository: UserTimezoneRepository
 ) {
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -27,8 +25,8 @@ class TimezoneCommandHandler(
      * the 1:1 conversation with the app; anywhere else the user is pointed there.
      */
     fun setTimezone(command: Command.SetTimezone): Either<Throwable, Unit> =
-        conversationRepository
-            .getOrCreateOneToOneConversation(command.requesterId)
+        outgoingMessageRepository
+            .findOneToOneConversation(command.requesterId)
             .flatMap { oneToOneId ->
                 if (oneToOneId == command.conversationId) {
                     storeTimezone(command)
@@ -52,23 +50,19 @@ class TimezoneCommandHandler(
             "Timezone preference is missing, asking the user for it. " +
                 "conversationId: $conversationId"
         )
-        return conversationRepository
-            .getOrCreateOneToOneConversation(requesterId)
-            .flatMap { oneToOneId ->
-                outgoingMessageRepository
-                    .sendMessage(
-                        conversationId = oneToOneId,
-                        messageContent = BuildMsg.timezoneRequestMessage
-                    ).flatMap {
-                        if (oneToOneId == conversationId) {
-                            Either.Right(Unit)
-                        } else {
-                            outgoingMessageRepository.sendMessage(
-                                conversationId = conversationId,
-                                messageContent = BuildMsg.timezoneRequestNotice
-                            )
-                        }
-                    }
+        return outgoingMessageRepository
+            .sendMessageToOneToOne(
+                userId = requesterId,
+                messageContent = BuildMsg.timezoneRequestMessage
+            ).flatMap { oneToOneId ->
+                if (oneToOneId == conversationId) {
+                    Either.Right(Unit)
+                } else {
+                    outgoingMessageRepository.sendMessage(
+                        conversationId = conversationId,
+                        messageContent = BuildMsg.timezoneRequestNotice
+                    )
+                }
             }
     }
 

@@ -1,7 +1,6 @@
 package com.wire.bots.domain.event.handlers
 
 import arrow.core.Either
-import com.wire.bots.domain.conversation.ConversationRepository
 import com.wire.bots.domain.event.Command
 import com.wire.bots.domain.message.OutgoingMessageRepository
 import com.wire.bots.domain.user.UserTimezoneRepository
@@ -21,7 +20,7 @@ class TimezoneCommandHandlerTest {
     fun `given set-timezone in the 1 to 1 conversation, then it is stored and confirmed`() {
         val fixture = Fixture()
         every {
-            fixture.conversations.getOrCreateOneToOneConversation(REQUESTER_ID)
+            fixture.outgoing.findOneToOneConversation(REQUESTER_ID)
         } returns Either.Right(ONE_TO_ONE_ID)
         every { fixture.timezones.save(REQUESTER_ID, BERLIN) } returns Either.Right(Unit)
         val message = slot<String>()
@@ -41,7 +40,7 @@ class TimezoneCommandHandlerTest {
     fun `given set-timezone in a group conversation, then nothing is stored`() {
         val fixture = Fixture()
         every {
-            fixture.conversations.getOrCreateOneToOneConversation(REQUESTER_ID)
+            fixture.outgoing.findOneToOneConversation(REQUESTER_ID)
         } returns Either.Right(ONE_TO_ONE_ID)
         val message = slot<String>()
         every {
@@ -59,14 +58,11 @@ class TimezoneCommandHandlerTest {
     @Test
     fun `given a reminder in a group needs a timezone, then the user is asked in the 1 to 1`() {
         val fixture = Fixture()
-        every {
-            fixture.conversations.getOrCreateOneToOneConversation(REQUESTER_ID)
-        } returns Either.Right(ONE_TO_ONE_ID)
         val prompt = slot<String>()
         val notice = slot<String>()
         every {
-            fixture.outgoing.sendMessage(ONE_TO_ONE_ID, capture(prompt))
-        } returns Either.Right(Unit)
+            fixture.outgoing.sendMessageToOneToOne(REQUESTER_ID, capture(prompt))
+        } returns Either.Right(ONE_TO_ONE_ID)
         every {
             fixture.outgoing.sendMessage(GROUP_ID, capture(notice))
         } returns Either.Right(Unit)
@@ -83,17 +79,16 @@ class TimezoneCommandHandlerTest {
     fun `given a reminder in the 1 to 1 needs a timezone, then the user is asked only once`() {
         val fixture = Fixture()
         every {
-            fixture.conversations.getOrCreateOneToOneConversation(REQUESTER_ID)
+            fixture.outgoing.sendMessageToOneToOne(REQUESTER_ID, any())
         } returns Either.Right(ONE_TO_ONE_ID)
-        every {
-            fixture.outgoing.sendMessage(ONE_TO_ONE_ID, any())
-        } returns Either.Right(Unit)
 
         fixture.handler
             .requestTimezone(conversationId = ONE_TO_ONE_ID, requesterId = REQUESTER_ID)
             .fold({ fail("expected success: $it") }) {}
 
-        verify(exactly = 1) { fixture.outgoing.sendMessage(ONE_TO_ONE_ID, any()) }
+        // The prompt lands in the 1:1 and no notice is duplicated into it.
+        verify(exactly = 1) { fixture.outgoing.sendMessageToOneToOne(REQUESTER_ID, any()) }
+        verify(exactly = 0) { fixture.outgoing.sendMessage(any(), any()) }
     }
 
     private fun command(conversationId: QualifiedId) =
@@ -105,9 +100,8 @@ class TimezoneCommandHandlerTest {
 
     private class Fixture {
         val outgoing = mockk<OutgoingMessageRepository>()
-        val conversations = mockk<ConversationRepository>()
         val timezones = mockk<UserTimezoneRepository>()
-        val handler = TimezoneCommandHandler(outgoing, conversations, timezones)
+        val handler = TimezoneCommandHandler(outgoing, timezones)
     }
 
     private companion object {
