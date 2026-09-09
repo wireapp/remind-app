@@ -64,7 +64,14 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
     implementation("com.rubiconproject.oss:jchronic:0.2.8")
     implementation("io.arrow-kt:arrow-core:2.1.2")
-    implementation("com.wire:wire-apps-jvm-sdk:0.2.1")
+    implementation("com.wire:wire-apps-jvm-sdk:0.2.1") {
+        // The SDK ships logback plus its own logback.xml, which made it a second SLF4J provider
+        // next to Quarkus' JBoss LogManager: records came out in two different JSON shapes
+        // depending on which backend a logger bound to. Only the provider is dropped here -
+        // logstash-logback-encoder stays, because it carries the Jackson 3 the SDK's HTTP
+        // logging (zalando logbook) loads at startup.
+        exclude(group = "ch.qos.logback")
+    }
 
     // Test dependencies
     testImplementation("io.quarkus:quarkus-junit5")
