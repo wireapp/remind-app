@@ -14,6 +14,7 @@ fun Reminder.toEntity(): ReminderEntity =
                 taskId = this.taskId,
                 task = this.task,
                 createdAt = this.createdAt,
+                zoneId = this.zoneId,
                 scheduledCron = this.scheduledCron,
                 isEternal = true
             )
@@ -25,6 +26,7 @@ fun Reminder.toEntity(): ReminderEntity =
                 task = this.task,
                 scheduledAt = this.scheduledAt,
                 createdAt = this.createdAt,
+                zoneId = this.zoneId,
                 isEternal = false
             )
     }
@@ -38,7 +40,8 @@ fun ReminderEntity.toDomain(): Reminder {
             scheduledCron = this.scheduledCron ?: error(
                 "scheduledCron is null for RecurringReminder"
             ),
-            createdAt = this.createdAt
+            createdAt = this.createdAt,
+            zoneId = this.zoneId
         )
 
         false ->
@@ -47,7 +50,8 @@ fun ReminderEntity.toDomain(): Reminder {
                 taskId = this.taskId,
                 task = this.task,
                 scheduledAt = this.scheduledAt ?: error("scheduledAt is null for SingleReminder"),
-                createdAt = this.createdAt
+                createdAt = this.createdAt,
+                zoneId = this.zoneId
             )
     }
 }

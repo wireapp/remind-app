@@ -12,6 +12,7 @@ This is an app that can create reminders for conversation, and send a message wh
 - Set recurrent reminders (e.g., every Monday)
 - List active reminders
 - Delete reminders (with the Delete button on each reminder)
+- Set your personal timezone, so reminder times mean what you expect
 
 > [!IMPORTANT]  
 > As of now, the app only supports a maximum of 5 active reminders per group.
@@ -21,6 +22,27 @@ This is an app that can create reminders for conversation, and send a message wh
 ### The basics of `/remind` command:
 
 - `/remind to <"what"> <"when">`: Sets a reminder for the group conversation, the reminder will be sent to the group when it's due.
+
+### Timezone
+
+Reminder times are read in **your** timezone, so you need to tell the app which one that is.
+Because it is a personal setting, it is only accepted in your 1:1 conversation with the app:
+
+```
+/remind set-timezone "Europe/Berlin"
+```
+
+Use an [IANA timezone name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones),
+for example `Europe/Istanbul`, `America/New_York` or `Asia/Tokyo`. Anything the app cannot
+resolve to a real timezone is rejected.
+
+The first time you create a reminder without having set a timezone, the app opens a 1:1
+conversation with you, asks for it there, and skips creating that reminder. Send the reminder
+command again once your timezone is set.
+
+> [!NOTE]
+> A reminder keeps the timezone it was created with. Changing your timezone later affects new
+> reminders only, so existing ones never shift for the rest of the conversation.
 
 ### `"When"` syntax or setting the time for the reminder:
 
@@ -51,6 +73,7 @@ This is an app that can create reminders for conversation, and send a message wh
 
 - `/remind help` (displays help about command usage)
 - `/remind list` (list the active reminders set in the conversation)
+- `/remind set-timezone "Europe/Berlin"` (sets your timezone, in the 1:1 with the app)
 
 To delete a reminder, use the **Delete** button shown next to each reminder in the `/remind list` response.
 

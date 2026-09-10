@@ -11,6 +11,22 @@ interface OutgoingMessageRepository {
         messageContent: String
     ): Either<Throwable, Unit>
 
+    /**
+     * Sends [messageContent] to the 1:1 conversation between the app and [userId], creating that
+     * conversation when there is none yet, and returns the conversation it was sent to.
+     */
+    fun sendMessageToOneToOne(
+        userId: QualifiedId,
+        messageContent: String
+    ): Either<Throwable, QualifiedId>
+
+    /**
+     * The 1:1 conversation between the app and [userId], or `null` when there is none. This only
+     * reads what the app already knows, so unlike [sendMessageToOneToOne] it never creates a
+     * conversation, which makes it safe to use for deciding where a command came from.
+     */
+    fun findOneToOneConversation(userId: QualifiedId): Either<Throwable, QualifiedId?>
+
     fun sendCompositeMessage(
         conversationId: QualifiedId,
         messageContent: String,

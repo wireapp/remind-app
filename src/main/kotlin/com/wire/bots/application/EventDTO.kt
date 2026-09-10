@@ -1,19 +1,21 @@
 package com.wire.bots.application
 
+import com.wire.sdk.model.QualifiedId
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import com.wire.sdk.model.QualifiedId
 
 interface EventDTO {
     val type: EventTypeDTO
-    val userId: String?
+
+    /** The user the event came from. Personal settings, like the timezone, are keyed on it. */
+    val senderId: QualifiedId
     val conversationId: QualifiedId
 }
 
 @Serializable
 data class MessageEventDTO(
     override val type: EventTypeDTO,
-    override val userId: String? = null,
+    override val senderId: QualifiedId,
     override val conversationId: QualifiedId,
     val text: TextContent? = null,
     val handle: String? = null,
@@ -27,7 +29,7 @@ data class MessageEventDTO(
 @Serializable
 data class ButtonActionEventDTO(
     override val type: EventTypeDTO,
-    override val userId: String? = null,
+    override val senderId: QualifiedId,
     override val conversationId: QualifiedId,
     val text: TextContent? = null,
     val handle: String? = null,
@@ -37,8 +39,7 @@ data class ButtonActionEventDTO(
     val refMessageId: String? = null,
     val emoji: String? = null,
     val buttonId: String? = null,
-    val referencedMessageId: String? = null,
-    val sender: String? = null
+    val referencedMessageId: String? = null
 ) : EventDTO
 
 @Serializable

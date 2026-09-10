@@ -25,7 +25,7 @@ class ReminderEventHandler(
         processEvent(
             MessageEventDTO(
                 type = EventTypeDTO.NEW_TEXT,
-                userId = wireMessage.sender.id.toString(),
+                senderId = wireMessage.sender,
                 conversationId = wireMessage.conversationId,
                 text = TextContent(wireMessage.text)
             )
@@ -47,30 +47,12 @@ class ReminderEventHandler(
         processEvent(
             ButtonActionEventDTO(
                 type = EventTypeDTO.BUTTON_ACTION,
-                userId = buttonAction.sender.id.toString(),
+                senderId = buttonAction.sender,
                 conversationId = buttonAction.conversationId,
                 buttonId = buttonAction.buttonId,
                 referencedMessageId = buttonAction.referencedMessageId
             )
         )
-    }
-
-    override suspend fun onLocationMessageReceived(locationMessage: WireMessage.Location) {
-        logger.info(
-            "Received onLocationSuspending Message : ${locationMessage.id} " +
-                "in conversation ${locationMessage.conversationId}"
-        )
-
-        val message = WireMessage.Text.create(
-            conversationId = locationMessage.conversationId,
-            text = "Received Location\n\n" +
-                "Latitude: ${locationMessage.latitude}\n\n" +
-                "Longitude: ${locationMessage.longitude}\n\n" +
-                "Name: ${locationMessage.name}\n\n" +
-                "Zoom: ${locationMessage.zoom}"
-        )
-
-        manager.sendMessageSuspending(message = message)
     }
 
     override suspend fun onAppAddedToConversation(

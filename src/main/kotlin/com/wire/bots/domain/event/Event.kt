@@ -1,7 +1,7 @@
 package com.wire.bots.domain.event
 
-import com.wire.bots.domain.reminder.Reminder
 import com.wire.sdk.model.QualifiedId
+import java.time.ZoneId
 import java.util.UUID
 
 sealed class Command(
@@ -16,10 +16,15 @@ sealed class Command(
 
     /**
      * New reminder event, for the target conversation.
+     *
+     * The schedule is still raw text: "tomorrow at 18:00" only becomes an instant once the
+     * timezone of [requesterId] is known, so the reminder is built while handling the command.
      */
     data class NewReminder(
         override val conversationId: QualifiedId,
-        val reminder: Reminder
+        val requesterId: QualifiedId,
+        val task: String,
+        val schedule: String
     ) : Command(conversationId)
 
     /**
@@ -36,7 +41,16 @@ sealed class Command(
         override val conversationId: QualifiedId,
         val reminderId: String,
         val referencedMessageId: String? = null,
-        val senderId: QualifiedId? = null
+        val senderId: QualifiedId
+    ) : Command(conversationId)
+
+    /**
+     * The requester picked the timezone their reminders should be scheduled in.
+     */
+    data class SetTimezone(
+        override val conversationId: QualifiedId,
+        val requesterId: QualifiedId,
+        val zoneId: ZoneId
     ) : Command(conversationId)
 }
 
@@ -76,6 +90,14 @@ sealed class BotError(
         val errorType: ErrorType
     ) : BotError(conversationId, errorType.message)
 
+    /**
+     * The user asked for a timezone we cannot resolve, so nothing was stored.
+     */
+    data class InvalidTimezone(
+        override val conversationId: QualifiedId,
+        val input: String
+    ) : BotError(conversationId, invalidTimezoneMessage(input))
+
     enum class ErrorType(
         val message: String
     ) {
@@ -101,6 +123,25 @@ sealed class BotError(
                 /remind help
                 ```
                 """.trimIndent()
+        ),
+        INVALID_SET_TIMEZONE_USAGE(
+            "❌ Please tell me which timezone to use:\n" +
+                """
+                ```
+                /remind set-timezone "Europe/Berlin"
+                ```
+                """.trimIndent()
         )
     }
 }
+
+private fun invalidTimezoneMessage(input: String): String =
+    "❌ “$input” is not a timezone I know.\n" +
+        "Please use a timezone name from the IANA database, for example:\n" +
+        """
+        ```
+        /remind set-timezone "Europe/Berlin"
+        /remind set-timezone "Europe/Istanbul"
+        /remind set-timezone "America/New_York"
+        ```
+        """.trimIndent()
