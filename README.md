@@ -143,5 +143,3 @@ If you want to learn more about building native executables, please consult http
 - Quartz ([guide](https://quarkus.io/guides/quartz)): Schedule clustered tasks with Quartz
 - Kotlin ([guide](https://quarkus.io/guides/kotlin)): Write your services in Kotlin
 - JDBC Driver - PostgreSQL ([guide](https://quarkus.io/guides/datasource)): Connect to the PostgreSQL database via JDBC
-
-
