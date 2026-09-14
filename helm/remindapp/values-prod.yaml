@@ -1,0 +1,13 @@
+# Production environment overrides
+image:
+  repository: quay.io/wire/remind-app
+  tag: "sha-8eec38d"
+env:
+- name: DB_USER
+  value: "remind-app-user"
+- name: DB_URL
+  value: "jdbc:postgresql://apps-prod-aurora-pg.cluster-cfym8eeo0ka0.eu-central-1.rds.amazonaws.com:5432/remind-app-db"
+- name: SDK_APP_ID
+  value: "0203b6e6-59f7-4a71-bd89-b52045f322da"
+- name: API_HOST_URL
+  value: "https://prod-nginz-https.wire.com"
