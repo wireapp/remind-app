@@ -145,6 +145,6 @@ private fun invalidTimezoneMessage(input: String): String =
         /remind set-timezone "Europe/London"
         /remind set-timezone "America/New_York"
         ```
-        
+
         Full list of supported timezones: ${BuildMsg.TIMEZONE_HELP_URL}
         """.trimIndent()

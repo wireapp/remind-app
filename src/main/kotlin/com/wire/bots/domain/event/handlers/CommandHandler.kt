@@ -262,7 +262,7 @@ object BuildMsg {
             Tell me your timezone with: ```/remind set-timezone "Europe/Berlin"```
             Use the timezone name for your city, like `Europe/Berlin` or `America/Detroit`.
             Once it's set, please send your reminder command again.
-            
+
             Full list of supported timezones: $TIMEZONE_HELP_URL
         """.trimIndent()
 
