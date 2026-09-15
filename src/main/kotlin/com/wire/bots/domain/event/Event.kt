@@ -1,5 +1,6 @@
 package com.wire.bots.domain.event
 
+import com.wire.bots.domain.event.handlers.BuildMsg
 import com.wire.sdk.model.QualifiedId
 import java.time.ZoneId
 import java.util.UUID
@@ -141,7 +142,9 @@ private fun invalidTimezoneMessage(input: String): String =
         """
         ```
         /remind set-timezone "Europe/Berlin"
-        /remind set-timezone "Europe/Istanbul"
+        /remind set-timezone "Europe/London"
         /remind set-timezone "America/New_York"
         ```
+        
+        Full list of supported timezones: ${BuildMsg.TIMEZONE_HELP_URL}
         """.trimIndent()

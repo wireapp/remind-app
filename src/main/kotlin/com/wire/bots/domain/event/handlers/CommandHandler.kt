@@ -223,6 +223,9 @@ class CommandHandler(
 }
 
 object BuildMsg {
+    const val TIMEZONE_HELP_URL =
+        "https://support.wire.com/hc/en-us/articles/39066798299293-Reminder-app"
+
     val helpMessage =
         """
             1. You can create one time reminders, for example:
@@ -256,13 +259,11 @@ object BuildMsg {
         """
             🌍 I don't know your timezone yet, so I can't schedule that reminder correctly.
 
-            Tell me your timezone with:
-            ```
-            /remind set-timezone "Europe/Berlin"
-            ```
+            Tell me your timezone with: ```/remind set-timezone "Europe/Berlin"```
             Use the timezone name for your city, like `Europe/Berlin` or `America/Detroit`.
-
             Once it's set, please send your reminder command again.
+            
+            Full list of supported timezones: $TIMEZONE_HELP_URL
         """.trimIndent()
 
     val timezoneRequestNotice =
