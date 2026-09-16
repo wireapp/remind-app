@@ -19,9 +19,12 @@ class ReminderEventHandler(
     private val logger = LoggerFactory.getLogger(this::class.java)
 
     override suspend fun onTextMessageReceived(wireMessage: WireMessage.Text) {
-        logger.info(
-            "Received Text Message : ${wireMessage.id} in conversation ${wireMessage.conversationId}"
+        logger.debug(
+            "Received Text Message : {} in conversation {}",
+            wireMessage.id,
+            wireMessage.conversationId
         )
+
         processEvent(
             MessageEventDTO(
                 type = EventTypeDTO.NEW_TEXT,
@@ -77,10 +80,7 @@ class ReminderEventHandler(
             logger.debug("Processing event: $eventDTO")
             val result: Either<BotError, Command> = EventMapper.fromEvent(eventDTO)
             result.fold(
-                ifLeft = { error ->
-                    logger.warn("Processing event with error: $error")
-                    eventProcessor.process(error)
-                },
+                ifLeft = { error -> eventProcessor.process(error) },
                 ifRight = { command ->
                     logger.info("Processing event parsed to: $command")
                     eventProcessor.process(command)
