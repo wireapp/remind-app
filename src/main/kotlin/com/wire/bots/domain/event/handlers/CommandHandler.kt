@@ -224,7 +224,7 @@ class CommandHandler(
 
 object BuildMsg {
     const val TIMEZONE_HELP_URL =
-        "https://support.wire.com/hc/en-us/articles/39066798299293-Reminder-app"
+        "https://support.wire.com/hc/en-us/articles/39066798299293-Remind-app"
 
     val helpMessage =
         """
