@@ -47,10 +47,14 @@ class EventProcessor(
 
     fun process(error: BotError): Either<Throwable, Unit> =
         when (error) {
-            is BotError.Unknown -> handleErrorMessage(error)
-            is BotError.Skip -> logger.warn("Event skipped, not necessary to handle").right()
-            is BotError.ReminderError -> handleErrorMessage(error)
-            is BotError.InvalidTimezone -> handleErrorMessage(error)
+            // Skipped events are not worth a log line, they are the normal messages.
+            is BotError.Skip -> Unit.right()
+            is BotError.Unknown,
+            is BotError.ReminderError,
+            is BotError.InvalidTimezone -> {
+                logger.warn("Error while processing the command: $error")
+                handleErrorMessage(error)
+            }
         }.mapLeft { unhandled ->
             logger.error(
                 "Fatal! Error while processing error, closing the door from outside",

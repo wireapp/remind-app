@@ -63,7 +63,7 @@ sealed class BotError(
      * An event that can be ignored-skipped by the bot
      * For example, user added to the conversation, mentions, etc.
      *
-     * This event should be logged, but not processed.
+     * This event should neither be logged nor processed.
      */
     data object Skip : BotError(
         conversationId = QualifiedId(UUID(0, 0), ""),
