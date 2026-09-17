@@ -1,6 +1,7 @@
 package com.wire.bots.domain.event
 
 import com.wire.bots.domain.event.handlers.BuildMsg
+import com.wire.bots.domain.usecase.ValidateReminder.MAX_TASK_LENGTH
 import com.wire.sdk.model.QualifiedId
 import java.time.ZoneId
 import java.util.UUID
@@ -112,6 +113,9 @@ sealed class BotError(
         ),
         EMPTY_REMINDER_TASK(
             "❌ Reminder message can't be empty. Please provide what you want to be reminded about."
+        ),
+        REMINDER_TASK_TOO_LONG(
+            "❌ Reminder message is too long. Please keep it to $MAX_TASK_LENGTH characters max."
         ),
         INVALID_REMINDER_USAGE(
             "❌ Invalid reminder usage. Please use the correct format:\n" +
