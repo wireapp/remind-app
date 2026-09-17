@@ -1,7 +1,7 @@
 # Production environment overrides
 image:
   repository: quay.io/wire/remind-app
-  tag: "sha-212d201"
+  tag: "sha-77e503a"
 env:
 - name: DB_USER
   value: "remind-app-user"
