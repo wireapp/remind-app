@@ -1,5 +1,6 @@
 package com.wire.bots.application
 
+import com.wire.bots.infrastructure.utils.HIDDEN
 import com.wire.sdk.model.QualifiedId
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -47,4 +48,7 @@ data class TextContent(
     val data: String,
     // todo: map later or never.
     @Transient val mentions: List<String> = emptyList()
-)
+) {
+    // Don't display 'data' content in logs
+    override fun toString(): String = "TextContent(data=$HIDDEN)"
+}

@@ -1,5 +1,6 @@
 package com.wire.bots.infrastructure.repository
 
+import com.wire.bots.infrastructure.utils.HIDDEN
 import com.wire.sdk.model.QualifiedId
 import io.quarkus.hibernate.orm.panache.kotlin.PanacheEntity
 import jakarta.persistence.Column
@@ -21,4 +22,9 @@ data class ReminderEntity(
     @Column(name = "scheduled_at") val scheduledAt: Instant? = null,
     @Column(name = "scheduled_cron") val scheduledCron: String? = null,
     @Column(name = "is_eternal") val isEternal: Boolean = false
-) : PanacheEntity()
+) : PanacheEntity() {
+    override fun toString(): String =
+        "ReminderEntity(createdAt=$createdAt, conversationId=$conversationId, taskId=$taskId, " +
+            "task=$HIDDEN, zoneId=$zoneId, scheduledAt=$scheduledAt, " +
+            "scheduledCron=$scheduledCron, isEternal=$isEternal)"
+}

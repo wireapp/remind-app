@@ -2,6 +2,7 @@ package com.wire.bots.domain.event
 
 import com.wire.bots.domain.event.handlers.BuildMsg
 import com.wire.bots.domain.usecase.ValidateReminder.MAX_TASK_LENGTH
+import com.wire.bots.infrastructure.utils.HIDDEN
 import com.wire.sdk.model.QualifiedId
 import java.time.ZoneId
 import java.util.UUID
@@ -27,7 +28,12 @@ sealed class Command(
         val requesterId: QualifiedId,
         val task: String,
         val schedule: String
-    ) : Command(conversationId)
+    ) : Command(conversationId) {
+        // Don't display 'task' content in logs
+        override fun toString(): String =
+            "NewReminder(conversationId=$conversationId, requesterId=$requesterId, " +
+                "task=$HIDDEN, schedule=$schedule)"
+    }
 
     /**
      * List reminders event, for the target conversation.
