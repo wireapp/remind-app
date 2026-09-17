@@ -33,6 +33,7 @@ object ReminderParser {
         zoneId: ZoneId
     ): Either<BotError, Reminder> {
         ValidateReminder.validateTaskNotEmpty(task, conversationId)?.let { return it.left() }
+        ValidateReminder.validateTaskLength(task, conversationId)?.let { return it.left() }
         return when {
             isRecurrentSchedule(schedule) && containsInvalidTimeTokens(schedule) ->
                 BotError
