@@ -1,5 +1,6 @@
 package com.wire.bots.domain.reminder
 
+import com.wire.bots.infrastructure.utils.HIDDEN
 import com.wire.sdk.model.QualifiedId
 import org.quartz.CronExpression
 import java.time.Instant
@@ -29,7 +30,11 @@ sealed interface Reminder {
         override val task: String,
         override val zoneId: ZoneId,
         val scheduledAt: Instant
-    ) : Reminder
+    ) : Reminder {
+        override fun toString(): String =
+            "SingleReminder(createdAt=$createdAt, conversationId=$conversationId, " +
+                "taskId=$taskId, task=$HIDDEN, zoneId=$zoneId, scheduledAt=$scheduledAt)"
+    }
 
     data class RecurringReminder(
         override val createdAt: Instant = Instant.now(),
@@ -38,7 +43,12 @@ sealed interface Reminder {
         override val task: String,
         override val zoneId: ZoneId,
         val scheduledCron: String
-    ) : Reminder
+    ) : Reminder {
+        override fun toString(): String =
+            "RecurringReminder(createdAt=$createdAt, taskId=$taskId, " +
+                "conversationId=$conversationId, task=$HIDDEN, zoneId=$zoneId, " +
+                "scheduledCron=$scheduledCron)"
+    }
 }
 
 /**
