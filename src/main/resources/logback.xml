@@ -1,0 +1,50 @@
+<configuration>
+    <!-- Log shape is kept identical to our Ktor-based apps so the Grafana dashboards and log
+         parsers work the same way against every app. Keys: timestamp, level, thread, logger,
+         message, context, exception. Change this only together with the other apps.
+
+         This file covers the application's own loggers, which go through slf4j -> logback. The
+         framework's own logs (Quarkus, Hibernate, Flyway, Agroal) bypass logback and are shaped
+         by quarkus.log.console.json.* in application.properties, so keep the two in step. -->
+
+    <!-- The Wire SDK jar ships its own logback.xml. This file wins because the application's
+         resources precede dependency jars on the classpath, but logback notices the duplicate and
+         dumps its whole internal status to stdout as plain text on every startup. Silence it, so
+         the stream stays JSON-only. Drop this line if the SDK ever stops bundling a logback.xml. -->
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
+
+    <!-- JSON appender (default) -->
+    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <fieldName>timestamp</fieldName>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+                <pattern>
+                    <pattern>
+                        {
+                        "level": "%level",
+                        "thread": "%thread",
+                        "logger": "%logger",
+                        "message": "%message",
+                        "context": "%mdc",
+                        "exception": "%ex"
+                        }
+                    </pattern>
+                </pattern>
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- Human-readable text appender (for local run purpose) -->
+    <appender name="PLAIN_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="info">
+        <appender-ref ref="${LOG_FORMAT:-JSON_CONSOLE}"/>
+    </root>
+</configuration>
