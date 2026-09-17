@@ -115,7 +115,7 @@ sealed class BotError(
             "❌ Reminder message can't be empty. Please provide what you want to be reminded about."
         ),
         REMINDER_TASK_TOO_LONG(
-            "❌ Reminder message is too long. Please keep it under $MAX_TASK_LENGTH characters."
+            "❌ Reminder message is too long. Please keep it to $MAX_TASK_LENGTH characters max."
         ),
         INVALID_REMINDER_USAGE(
             "❌ Invalid reminder usage. Please use the correct format:\n" +
