@@ -1,0 +1,71 @@
+<configuration>
+    <!-- Log shape is kept in line with our Ktor-based apps so the Grafana dashboards and log
+         parsers work the same way against every app. Every line, from either half of this app,
+         carries exactly: timestamp, level, thread, logger, message - plus exception when a
+         throwable is logged. Change this only together with the other apps.
+
+         This file covers the application's own loggers, which go through slf4j -> logback. The
+         framework's own logs (Quarkus, Hibernate, Flyway, Agroal) bypass logback and are shaped
+         by quarkus.log.console.json.* in application.properties, so keep the two in step.
+
+         Two deliberate differences from the Ktor apps' file, both to stop the two halves of this
+         app from emitting different keys. The Ktor apps emit "context": "%mdc" and an always
+         present "exception"; JBoss LogManager can do neither, so both are dropped here. No app in
+         the fleet writes to the MDC, so "context" is an empty string everywhere and carries no
+         data. If we ever do adopt the MDC, move every app to logstash's <mdc/> provider at the
+         same time - it emits a real object, which is what JBoss LogManager emits too, so the two
+         stay type-compatible. Do not reintroduce "%mdc" here on its own: it renders a flat string
+         and JBoss LogManager renders an object, and one key arriving with two types breaks the
+         index mapping for anything parsing both halves. -->
+
+    <!-- The Wire SDK jar ships its own logback.xml. This file wins because the application's
+         resources precede dependency jars on the classpath, but logback notices the duplicate and
+         dumps its whole internal status to stdout as plain text on every startup. Silence it, so
+         the stream stays JSON-only. Drop this line if the SDK ever stops bundling a logback.xml. -->
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
+
+    <!-- JSON appender (default) -->
+    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <fieldName>timestamp</fieldName>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+                <pattern>
+                    <pattern>
+                        {
+                        "level": "%level",
+                        "thread": "%thread",
+                        "logger": "%logger",
+                        "message": "%message"
+                        }
+                    </pattern>
+                </pattern>
+                <!-- The exception is a separate provider rather than "%ex" in the pattern above,
+                     because the pattern provider keeps empty fields: "%ex" would put an
+                     "exception": "" on every line that has no throwable, while the framework half
+                     emits the key only when there is one. This provider is conditional by
+                     construction and renders the same text as %ex.
+
+                     Not done with the pattern provider's omitEmptyFields, which would apply to
+                     every field: an empty log message would then drop the "message" key here
+                     while the framework half still emits "message": "". -->
+                <stackTrace>
+                    <fieldName>exception</fieldName>
+                </stackTrace>
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- Human-readable text appender (for local run purpose) -->
+    <appender name="PLAIN_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="info">
+        <appender-ref ref="${LOG_FORMAT:-JSON_CONSOLE}"/>
+    </root>
+</configuration>
