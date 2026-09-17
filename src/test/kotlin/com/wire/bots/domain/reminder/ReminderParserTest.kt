@@ -1,6 +1,7 @@
 package com.wire.bots.domain.reminder
 
 import com.wire.bots.domain.event.BotError
+import com.wire.bots.domain.usecase.ValidateReminder.MAX_TASK_LENGTH
 import com.wire.bots.shouldFail
 import com.wire.bots.shouldSucceed
 import com.wire.sdk.model.QualifiedId
@@ -153,6 +154,35 @@ class ReminderParserTest {
         schedules.forEach { schedule ->
             assertEquals(10, schedule.toInstant().atZone(BERLIN).hour)
         }
+    }
+
+    @Test
+    fun givenATask_whenItIsLongerThanTheColumnAllows_ThenRaiseError() {
+        val result = parse(task = "x".repeat(MAX_TASK_LENGTH + 1), schedule = "tomorrow at 14:00")
+
+        result.shouldFail {
+            assertInstanceOf(BotError.ReminderError::class.java, it)
+            assertEquals(
+                BotError.ErrorType.REMINDER_TASK_TOO_LONG.message,
+                (it as BotError.ReminderError).reason
+            )
+        }
+    }
+
+    @Test
+    fun givenATask_whenItIsExactlyAtTheLimit_ThenItIsAccepted() {
+        val result = parse(task = "x".repeat(MAX_TASK_LENGTH), schedule = "tomorrow at 14:00")
+
+        result.shouldSucceed { assertEquals(MAX_TASK_LENGTH, it.task.length) }
+    }
+
+    @Test
+    fun givenATaskWithAShortNoteAndALink_whenItFitsTheLimit_ThenItIsAccepted() {
+        val task = "check this https://wire.com/en/blog/wire-apps-sdk-javascript-and-typescript"
+
+        val result = parse(task = task, schedule = "tomorrow at 14:00")
+
+        result.shouldSucceed { assertEquals(task, it.task) }
     }
 
     private fun parse(
