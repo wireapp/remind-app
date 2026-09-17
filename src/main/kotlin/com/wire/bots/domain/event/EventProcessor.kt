@@ -1,6 +1,7 @@
 package com.wire.bots.domain.event
 
 import arrow.core.Either
+import arrow.core.flatMap
 import arrow.core.right
 import com.wire.bots.domain.DomainComponent
 import com.wire.bots.domain.event.handlers.CommandHandler
@@ -21,9 +22,16 @@ class EventProcessor(
 ) {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
+    /**
+     * Failures are not always returned as a [Either.Left]: a constraint the database enforces is
+     * only checked when the transaction commits, which happens after the transactional use case
+     * has returned, so it reaches us as a thrown exception. Catch those as well, otherwise the
+     * command fails without the user ever hearing about it.
+     */
     fun process(command: Command): Either<Throwable, Unit> =
-        commandHandler
-            .onEvent(command)
+        Either
+            .catch { commandHandler.onEvent(command) }
+            .flatMap { it }
             .mapLeft { unhandled ->
                 logger.error("Error processing command: $command", unhandled)
                 outgoingMessageRepository.sendMessage(
