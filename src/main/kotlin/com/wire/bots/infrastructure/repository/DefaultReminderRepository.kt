@@ -46,4 +46,12 @@ class DefaultReminderRepository :
                 conversationId
             )
         }
+
+    @Transactional
+    override fun deleteRemindersByConversationId(
+        conversationId: QualifiedId
+    ): Either<Throwable, Long> =
+        Either.catch {
+            delete("conversationId", conversationId)
+        }
 }
