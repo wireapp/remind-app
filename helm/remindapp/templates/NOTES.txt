@@ -52,9 +52,6 @@ CONFIGURATION:
 {{- if eq .name "DB_URL" }}
 - Database Url: {{ .value | default "Not configured" }}
 {{- end }}
-{{- if eq .name "SDK_APP_ID" }}
-- Wire SDK App Id: {{ .value | default "Not configured" }}
-{{- end }}
 {{- if eq .name "API_HOST_URL" }}
 - Wire API Host Url: {{ .value | default "Not configured" }}
 {{- end }}

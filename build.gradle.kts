@@ -3,10 +3,10 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
 
 plugins {
-    kotlin("jvm") version "2.2.20"
-    kotlin("plugin.allopen") version "2.2.20"
-    kotlin("plugin.noarg") version "2.2.20"
-    kotlin("plugin.serialization") version "2.2.20"
+    kotlin("jvm") version "2.4.20"
+    kotlin("plugin.allopen") version "2.4.20"
+    kotlin("plugin.noarg") version "2.4.20"
+    kotlin("plugin.serialization") version "2.4.20"
     id("org.jlleitschuh.gradle.ktlint") version "13.1.0"
     id("io.gitlab.arturbosch.detekt") version "1.23.8"
     id("io.quarkus")
@@ -25,10 +25,10 @@ configurations.all {
     resolutionStrategy {
         force("com.google.protobuf:protobuf-java:4.33.5")
         force("com.google.protobuf:protobuf-kotlin:4.33.5")
-        force("org.jetbrains.kotlin:kotlin-stdlib:2.3.21")
-        force("org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.3.21")
-        force("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.3.21")
-        force("org.jetbrains.kotlin:kotlin-reflect:2.3.21")
+        force("org.jetbrains.kotlin:kotlin-stdlib:2.4.20")
+        force("org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.4.20")
+        force("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.4.20")
+        force("org.jetbrains.kotlin:kotlin-reflect:2.4.20")
         force("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
         force("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0")
         force("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.11.0")
@@ -64,7 +64,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
     implementation("com.rubiconproject.oss:jchronic:0.2.8")
     implementation("io.arrow-kt:arrow-core:2.1.2")
-    implementation("com.wire:wire-apps-jvm-sdk:0.2.1")
+    implementation("com.wire:wire-apps-jvm-sdk:0.3.0")
 
     // Test dependencies
     testImplementation("io.quarkus:quarkus-junit5")
