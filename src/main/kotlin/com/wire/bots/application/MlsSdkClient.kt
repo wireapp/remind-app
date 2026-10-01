@@ -16,6 +16,7 @@
 package com.wire.bots.application
 
 import com.wire.bots.domain.event.EventProcessor
+import com.wire.bots.domain.usecase.DeleteRemindersInConversation
 import com.wire.bots.infrastructure.utils.UsageMetrics
 import com.wire.sdk.WireAppSdk
 import com.wire.sdk.service.WireApplicationManager
@@ -33,13 +34,16 @@ import java.util.UUID
 @Startup
 class MlsSdkClient(
     private val eventProcessor: EventProcessor,
-    private val usageMetrics: UsageMetrics
+    private val usageMetrics: UsageMetrics,
+    private val deleteRemindersInConversation: DeleteRemindersInConversation
 ) {
     private val logger = LoggerFactory.getLogger(this::class.java)
     private lateinit var manager: WireApplicationManager
 
-    private val applicationId: String = System.getenv("SDK_APP_ID")
-        ?: throw IllegalStateException("SDK_APP_ID environment variable is required")
+    private val applicationId: UUID = UUID.fromString(
+        System.getenv("SDK_APP_ID")
+            ?: throw IllegalStateException("SDK_APP_ID environment variable is required")
+    )
     private val apiToken: String = System.getenv("SDK_APP_TOKEN")
         ?: throw IllegalStateException("SDK_APP_TOKEN environment variable is required")
     private val apiHost: String = System.getenv("API_HOST_URL")
@@ -53,11 +57,18 @@ class MlsSdkClient(
     fun init() {
         val wireAppSdk =
             WireAppSdk(
-                applicationId = UUID.fromString(applicationId),
+                applicationId = applicationId,
                 apiToken = apiToken,
                 apiHost = apiHost,
                 cryptographyStorageKey = cryptographyStoragePassword.toByteArray(),
-                wireEventsHandler = ReminderEventHandler(eventProcessor, usageMetrics)
+                wireEventsHandler = ReminderEventHandler(
+                    eventProcessor = eventProcessor,
+                    usageMetrics = usageMetrics,
+                    deleteRemindersInConversation = deleteRemindersInConversation,
+                    // The app is a conversation member like any other, so its own id is what
+                    // tells a member-leave event about the app apart from one about a user.
+                    appUserId = applicationId
+                )
             )
 
         logger.info("Starting Wire Apps SDK...")

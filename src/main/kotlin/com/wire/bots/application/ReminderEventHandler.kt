@@ -5,16 +5,21 @@ import com.wire.bots.domain.event.BotError
 import com.wire.bots.domain.event.Command
 import com.wire.bots.domain.event.EventProcessor
 import com.wire.bots.domain.event.handlers.BuildMsg.welcomeText
+import com.wire.bots.domain.usecase.DeleteRemindersInConversation
 import com.wire.bots.infrastructure.utils.UsageMetrics
 import com.wire.sdk.WireEventsHandlerSuspending
 import com.wire.sdk.model.Conversation
 import com.wire.sdk.model.ConversationMember
+import com.wire.sdk.model.QualifiedId
 import com.wire.sdk.model.WireMessage
 import org.slf4j.LoggerFactory
+import java.util.UUID
 
 class ReminderEventHandler(
     private val eventProcessor: EventProcessor,
-    private val usageMetrics: UsageMetrics
+    private val usageMetrics: UsageMetrics,
+    private val deleteRemindersInConversation: DeleteRemindersInConversation,
+    private val appUserId: UUID
 ) : WireEventsHandlerSuspending() {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -70,6 +75,64 @@ class ReminderEventHandler(
         )
 
         manager.sendMessageSuspending(welcomeMessage)
+    }
+
+    /**
+     * The conversation is gone for everyone, so its reminders can never be delivered again.
+     */
+    override suspend fun onConversationDeleted(conversationId: QualifiedId) {
+        logger.info(
+            "Conversation {} was deleted, deleting its reminders",
+            conversationId
+        )
+        purgeReminders(conversationId)
+    }
+
+    /**
+     * Fired for every member leaving, so the reminders are only dropped when the app itself is
+     * the one that left: the conversation keeps its reminders when one of its users walks out.
+     */
+    override suspend fun onUserLeftConversation(
+        conversationId: QualifiedId,
+        members: List<QualifiedId>
+    ) {
+        if (members.none { it.id == appUserId }) {
+            logger.debug(
+                "A user left conversation {}, the app stays, keeping its reminders",
+                conversationId
+            )
+            return
+        }
+
+        usageMetrics.onAppRemovedFromConversation()
+        logger.info(
+            "The app was removed from conversation {}, deleting its reminders",
+            conversationId
+        )
+        purgeReminders(conversationId)
+    }
+
+    /**
+     * Cleanup is silent: there is no conversation left to report a failure into, so a failure is
+     * only logged. Reminders left behind would keep firing and fail with "Conversation access
+     * denied" or "Conversation not found" instead.
+     */
+    private fun purgeReminders(conversationId: QualifiedId) {
+        deleteRemindersInConversation(conversationId).fold(
+            ifLeft = { error ->
+                logger.error(
+                    "Failed to delete the reminders of conversation $conversationId",
+                    error
+                )
+            },
+            ifRight = { deleted ->
+                logger.info(
+                    "Deleted {} reminder(s) of conversation {}",
+                    deleted,
+                    conversationId
+                )
+            }
+        )
     }
 
     /**

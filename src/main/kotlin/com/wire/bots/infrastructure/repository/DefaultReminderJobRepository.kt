@@ -16,6 +16,7 @@ import org.quartz.Scheduler
 import org.quartz.SimpleScheduleBuilder
 import org.quartz.Trigger
 import org.quartz.TriggerBuilder
+import org.quartz.impl.matchers.GroupMatcher
 import java.util.Date
 import java.util.TimeZone
 
@@ -42,6 +43,20 @@ class DefaultReminderJobRepository(
     ): Either<Throwable, Unit> =
         Either.catch {
             quartz.deleteJob(JobKey.jobKey(reminderId, conversationId.toRawString()))
+        }
+
+    /**
+     * Every job of a conversation is scheduled in a group named after the conversation, so the
+     * whole conversation can be cancelled by deleting that group.
+     */
+    override fun cancelAllReminderJobsInConversation(
+        conversationId: QualifiedId
+    ): Either<Throwable, Unit> =
+        Either.catch {
+            val jobKeys = quartz.getJobKeys(
+                GroupMatcher.jobGroupEquals(conversationId.toRawString())
+            )
+            quartz.deleteJobs(jobKeys.toList())
         }
 
     /**

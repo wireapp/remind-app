@@ -38,6 +38,11 @@ class UsageMetrics(
         .description("Number of times the app is added to a conversation")
         .register(registry)
 
+    private val appRemovedFromConversationCounter: Counter = Counter
+        .builder("remindapp_removed_from_conversation_total")
+        .description("Number of times the app is removed from a conversation")
+        .register(registry)
+
     fun onHelpCommand() {
         helpCommandCounter.increment()
     }
@@ -60,5 +65,9 @@ class UsageMetrics(
 
     fun onAppAddedToConversation() {
         appAddedToConversationCounter.increment()
+    }
+
+    fun onAppRemovedFromConversation() {
+        appRemovedFromConversationCounter.increment()
     }
 }
