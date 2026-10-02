@@ -4,7 +4,6 @@
   <CurrentIssues>
     <ID>UseCheckOrError:MlsSdkClient.kt$MlsSdkClient$throw IllegalStateException("API_HOST_URL environment variable is required")</ID>
     <ID>UseCheckOrError:MlsSdkClient.kt$MlsSdkClient$throw IllegalStateException("CRYPTO_PASSWORD environment variable is required")</ID>
-    <ID>UseCheckOrError:MlsSdkClient.kt$MlsSdkClient$throw IllegalStateException("SDK_APP_ID environment variable is required")</ID>
     <ID>UseCheckOrError:MlsSdkClient.kt$MlsSdkClient$throw IllegalStateException("SDK_APP_TOKEN environment variable is required")</ID>
   </CurrentIssues>
 </SmellBaseline>
