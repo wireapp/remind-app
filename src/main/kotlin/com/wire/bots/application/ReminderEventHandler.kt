@@ -13,13 +13,11 @@ import com.wire.sdk.model.ConversationMember
 import com.wire.sdk.model.QualifiedId
 import com.wire.sdk.model.WireMessage
 import org.slf4j.LoggerFactory
-import java.util.UUID
 
 class ReminderEventHandler(
     private val eventProcessor: EventProcessor,
     private val usageMetrics: UsageMetrics,
-    private val deleteRemindersInConversation: DeleteRemindersInConversation,
-    private val appUserId: UUID
+    private val deleteRemindersInConversation: DeleteRemindersInConversation
 ) : WireEventsHandlerSuspending() {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -96,7 +94,9 @@ class ReminderEventHandler(
         conversationId: QualifiedId,
         members: List<QualifiedId>
     ) {
-        if (members.none { it.id == appUserId }) {
+        // The app is a conversation member like any other, so its own id is what tells a
+        // member-leave event about the app apart from one about a user.
+        if (manager.getApplicationQualifiedId() !in members) {
             logger.debug(
                 "A user left conversation {}, the app stays, keeping its reminders",
                 conversationId
