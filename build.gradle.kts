@@ -14,6 +14,17 @@ plugins {
 
 repositories {
     mavenCentral()
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "Wire"
+                url = uri("https://maven.wire.com/")
+            }
+        }
+        filter {
+            includeModule("com.wire", "wire-apps-jvm-sdk")
+        }
+    }
 }
 
 val quarkusPlatformGroupId: String by project
@@ -64,7 +75,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
     implementation("com.rubiconproject.oss:jchronic:0.2.8")
     implementation("io.arrow-kt:arrow-core:2.1.2")
-    implementation("com.wire:wire-apps-jvm-sdk:0.3.0")
+    implementation("com.wire:wire-apps-jvm-sdk:0.3.1")
 
     // Test dependencies
     testImplementation("io.quarkus:quarkus-junit5")
