@@ -36,14 +36,6 @@ class ReminderEventHandler(
                 text = TextContent(wireMessage.text)
             )
         )
-
-        // Sending a Read Receipt for the received message
-        val receipt = WireMessage.Receipt.create(
-            conversationId = wireMessage.conversationId,
-            type = WireMessage.Receipt.Type.READ,
-            messages = listOf(wireMessage.id.toString())
-        )
-        manager.sendMessageSuspending(message = receipt)
     }
 
     override suspend fun onButtonClicked(buttonAction: WireMessage.ButtonAction) {
