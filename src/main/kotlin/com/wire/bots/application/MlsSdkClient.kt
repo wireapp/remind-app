@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory
 @ApplicationScoped
 @Startup
 class MlsSdkClient(
+    // Testing PR Claude trigger
     private val eventProcessor: EventProcessor,
     private val usageMetrics: UsageMetrics,
     private val deleteRemindersInConversation: DeleteRemindersInConversation
